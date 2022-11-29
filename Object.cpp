@@ -1388,7 +1388,7 @@ CDynamicCubeMappingObject::CDynamicCubeMappingObject(ID3D12Device* pd3dDevice, I
 
 	pMaterial->SetTexture(pTexture);
 
-	SetMaterial(0, pMaterial);
+	SetMaterial(1, pMaterial);
 }
 
 CDynamicCubeMappingObject::~CDynamicCubeMappingObject()

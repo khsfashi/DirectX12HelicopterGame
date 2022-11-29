@@ -1226,25 +1226,15 @@ void CTerrainWaterShader::CreateShader(ID3D12Device* pd3dDevice, ID3D12GraphicsC
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 
-CViewportShader::CViewportShader(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature)
-{
-	/*XMFLOAT3 xmf3Scale(18.0f, 6.0f, 18.0f);
-	XMFLOAT4 xmf4Color(0.0f, 0.5f, 0.0f, 0.0f);
-	m_pTerrain = new CHeightMapTerrain(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, _T("Image/HeightMap.raw"), 257, 257, 257, 257, xmf3Scale, xmf4Color, TRUE);
-	m_pTerrain->SetPosition(m_pTerrain->GetPosition().x, m_pTerrain->GetPosition().y, m_pTerrain->GetPosition().x);
-	float fWidth = m_pTerrain->GetWidth();
-	float fLength = m_pTerrain->GetLength();
-	m_pWater = new CTerrainWater(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, fWidth, fLength, TRUE);
 
-	m_pWater->SetPosition(+(257 * xmf3Scale.x * 0.5f), 500.0f, +(257 * xmf3Scale.z * 0.5f));*/
+CViewportShader::CViewportShader(CObjectsShader* pObjectsShader, CHeightMapTerrain* pTerrain, CTerrainWater* pWater)
+{
+	m_pObjectsShader = pObjectsShader;
+	m_pTerrain = pTerrain;
+	m_pWater = pWater;
 
 }
 
-CViewportShader::CViewportShader(CHeightMapTerrain* terrain, CTerrainWater* water)
-{
-	m_pTerrain = terrain;
-	m_pWater = water;
-}
 
 CViewportShader::~CViewportShader()
 {
@@ -1382,7 +1372,7 @@ void CViewportShader::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera
 	
 	m_pTerrain->Render(pd3dCommandList, pCamera);
 	m_pWater->Render(pd3dCommandList, pCamera);
-	
+	m_pObjectsShader->Render(pd3dCommandList, pCamera);
 
 	pd3dCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	pd3dCommandList->DrawInstanced(6, 1, 0, 0);

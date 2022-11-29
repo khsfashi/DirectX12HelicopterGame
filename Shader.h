@@ -276,8 +276,7 @@ public:
 class CViewportShader : public CShader
 {
 public:
-	CViewportShader(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature);
-	CViewportShader(CHeightMapTerrain* terrain, CTerrainWater* water);
+	CViewportShader(CObjectsShader* pObjectsShader, CHeightMapTerrain* pTerrain, CTerrainWater* pWater);
 	virtual ~CViewportShader();
 
 	virtual D3D12_DEPTH_STENCIL_DESC CreateDepthStencilState();
@@ -295,6 +294,7 @@ public:
 	virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera, int nPipelineState = 0);
 
 protected:
+	CObjectsShader					*m_pObjectsShader = NULL;
 	CHeightMapTerrain				*m_pTerrain = NULL;
 	CTerrainWater					*m_pWater = NULL;
 

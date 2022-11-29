@@ -94,8 +94,7 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 
 	m_ppShaders[1] = pBillboardObjectsShader;
 
-	//m_pMapToViewport = new CViewportShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
-	m_pMapToViewport = new CViewportShader(m_pTerrain, m_pWater);
+	m_pMapToViewport = new CViewportShader(pObjectsShader, m_pTerrain, m_pWater);
 	m_pMapToViewport->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
 	m_pMapToViewport->BuildObjects(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, NULL);
 
@@ -506,7 +505,27 @@ void CScene::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera
 	for (int i = 0; i < m_nGameObjects; i++) if (m_ppGameObjects[i]) m_ppGameObjects[i]->Render(pd3dCommandList, pCamera);
 	for (int i = 0; i < m_nShaders; i++) if (m_ppShaders[i]) m_ppShaders[i]->Render(pd3dCommandList, pCamera);
 
-	
+	m_pViewCamera->SetOffset(XMFLOAT3(0.0f, 500.0f, -10.0f));
+	XMFLOAT3 pos = m_pPlayer->GetPosition();
+	m_pViewCamera->SetPosition(XMFLOAT3(pos.x, pos.y + 1000.0f, pos.z));
+	m_pViewCamera->SetLookAt(pCamera->GetLookAtPosition());
+	m_pViewCamera->m_xmf3Up = XMFLOAT3(0.0f, 0.0f, 1.0f);
+	m_pViewCamera->m_xmf3Look = XMFLOAT3(0.0f, -1.0f, 0.0f);
+
+	m_pViewCamera->RegenerateViewMatrix();
+
+	m_pViewCamera->SetViewportsAndScissorRects(pd3dCommandList);
+	m_pViewCamera->UpdateShaderVariables(pd3dCommandList);
+
+	D3D12_VIEWPORT d3dViewport = { 0.0f, 0.0f, FRAME_BUFFER_WIDTH * 0.2f, FRAME_BUFFER_HEIGHT * 0.2f, 0.0f, 1.0f };
+	D3D12_RECT d3dScissorRect = { 0, 0, FRAME_BUFFER_WIDTH / 4, FRAME_BUFFER_HEIGHT / 4 };
+	pd3dCommandList->RSSetViewports(1, &d3dViewport);
+	pd3dCommandList->RSSetScissorRects(1, &d3dScissorRect);
+
+	if (m_pMapToViewport) m_pMapToViewport->Render(pd3dCommandList, m_pViewCamera);
+
+	pCamera->SetViewportsAndScissorRects(pd3dCommandList);
+	pCamera->UpdateShaderVariables(pd3dCommandList);
 }
 
 void CScene::MinimapRender(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera)
