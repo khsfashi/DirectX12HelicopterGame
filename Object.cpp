@@ -1341,7 +1341,7 @@ void CBulletObject::Reset()
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 
-CDynamicCubeMappingObject::CDynamicCubeMappingObject(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, LONG nCubeMapSize, D3D12_CPU_DESCRIPTOR_HANDLE d3dDsvCPUDescriptorHandle, D3D12_CPU_DESCRIPTOR_HANDLE d3dRtvCPUDescriptorHandle, CShader* pShader)
+CDynamicCubeMappingObject::CDynamicCubeMappingObject(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, LONG nCubeMapSize, D3D12_CPU_DESCRIPTOR_HANDLE d3dDsvCPUDescriptorHandle, D3D12_CPU_DESCRIPTOR_HANDLE d3dRtvCPUDescriptorHandle, CShader* pShader) : CGameObject(1, 1)
 {
 	//Camera[6]
 	for (int j = 0; j < 6; j++)
@@ -1363,7 +1363,7 @@ CDynamicCubeMappingObject::CDynamicCubeMappingObject(ID3D12Device* pd3dDevice, I
 	CTexture* pTexture = new CTexture(1, RESOURCE_TEXTURE_CUBE, 0, 1);
 	D3D12_CLEAR_VALUE d3dRtbClearValue = { DXGI_FORMAT_R8G8B8A8_UNORM, { 0.0f, 0.0f, 0.0f, 1.0f } };
 	ID3D12Resource* pd3dResource = pTexture->CreateTexture(pd3dDevice, pd3dCommandList, 0, RESOURCE_TEXTURE_CUBE, nCubeMapSize, nCubeMapSize, 6, 1, DXGI_FORMAT_R8G8B8A8_UNORM, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, D3D12_RESOURCE_STATE_GENERIC_READ, &d3dRtbClearValue);
-	pShader->CreateShaderResourceViews(pd3dDevice, pTexture, 0, 11);
+	pShader->CreateShaderResourceViews(pd3dDevice, pTexture, 0, 17);
 
 	D3D12_RENDER_TARGET_VIEW_DESC d3dRTVDesc;
 	d3dRTVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -1379,6 +1379,7 @@ CDynamicCubeMappingObject::CDynamicCubeMappingObject(ID3D12Device* pd3dDevice, I
 		pd3dDevice->CreateRenderTargetView(pd3dResource, &d3dRTVDesc, m_pd3dRtvCPUDescriptorHandles[j]);
 		d3dRtvCPUDescriptorHandle.ptr += ::gnRtvDescriptorIncrementSize;
 	}
+	//m_ppMaterials = new CMaterial * [1];
 
 	CMaterial* pMaterial = new CMaterial();
 	pMaterial->m_xmf4AmbientColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -1388,7 +1389,10 @@ CDynamicCubeMappingObject::CDynamicCubeMappingObject(ID3D12Device* pd3dDevice, I
 
 	pMaterial->SetTexture(pTexture);
 
-	SetMaterial(1, pMaterial);
+	/*m_ppMaterials[0] = pMaterial;
+	if (m_ppMaterials[0]) m_ppMaterials[0]->AddRef();*/
+
+	SetMaterial(0, pMaterial);
 }
 
 CDynamicCubeMappingObject::~CDynamicCubeMappingObject()

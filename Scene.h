@@ -64,6 +64,7 @@ public:
 	void UpdateWater(float fCurrentTime);
 
 	void PrepareRender(ID3D12GraphicsCommandList* pd3dCommandList);
+	void OnPreRender(ID3D12Device* pd3dDevice, ID3D12CommandQueue* pd3dCommandQueue, ID3D12Fence* pd3dFence, HANDLE hFenceEvent);
     void Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera=NULL);
     void MinimapRender(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera=NULL);
 
@@ -85,6 +86,9 @@ public:
 	CSkyBox								*m_pSkyBox = NULL;
 	CHeightMapTerrain					*m_pTerrain = NULL;
 	CTerrainWater						*m_pWater = NULL;
+
+	CDynamicCubeMappingShader			**m_ppEnvironmentMappingShaders = NULL;
+	int									m_nEnvironmentMappingShaders = 0;
 
 	LIGHT								*m_pLights = NULL;
 	int									m_nLights = 0;
