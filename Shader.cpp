@@ -1526,14 +1526,14 @@ D3D12_INPUT_LAYOUT_DESC CDynamicCubeMappingShader::CreateInputLayout()
 	return(d3dInputLayoutDesc);
 }
 
-D3D12_SHADER_BYTECODE CDynamicCubeMappingShader::CreateVertexShader(ID3DBlob** ppd3dShaderBlob)
+D3D12_SHADER_BYTECODE CDynamicCubeMappingShader::CreateVertexShader()
 {
-	return(CShader::CompileShaderFromFile(L"Shaders.hlsl", "VSCubeMapping", "vs_5_1", ppd3dShaderBlob));
+	return(CShader::CompileShaderFromFile(L"Shaders.hlsl", "VSCubeMapping", "vs_5_1", &m_pd3dVertexShaderBlob));
 }
 
-D3D12_SHADER_BYTECODE CDynamicCubeMappingShader::CreatePixelShader(ID3DBlob** ppd3dShaderBlob)
+D3D12_SHADER_BYTECODE CDynamicCubeMappingShader::CreatePixelShader()
 {
-	return(CShader::CompileShaderFromFile(L"Shaders.hlsl", "PSCubeMapping", "ps_5_1", ppd3dShaderBlob));
+	return(CShader::CompileShaderFromFile(L"Shaders.hlsl", "PSCubeMapping", "ps_5_1", &m_pd3dPixelShaderBlob));
 }
 
 

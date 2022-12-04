@@ -94,12 +94,12 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 
 	m_ppShaders[1] = pBillboardObjectsShader;
 
-	m_nEnvironmentMappingShaders = 1;
-	m_ppEnvironmentMappingShaders = new CDynamicCubeMappingShader * [m_nEnvironmentMappingShaders];
+	//m_nEnvironmentMappingShaders = 1;
+	//m_ppEnvironmentMappingShaders = new CDynamicCubeMappingShader * [m_nEnvironmentMappingShaders];
 
-	m_ppEnvironmentMappingShaders[0] = new CDynamicCubeMappingShader(256);
-	m_ppEnvironmentMappingShaders[0]->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
-	m_ppEnvironmentMappingShaders[0]->BuildObjects(pd3dDevice, pd3dCommandList, m_pTerrain);
+	//m_ppEnvironmentMappingShaders[0] = new CDynamicCubeMappingShader(256);
+	//m_ppEnvironmentMappingShaders[0]->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
+	//m_ppEnvironmentMappingShaders[0]->BuildObjects(pd3dDevice, pd3dCommandList, m_pTerrain);
 
 	m_pMapToViewport = new CViewportShader(pObjectsShader, m_pTerrain, m_pWater);
 	m_pMapToViewport->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
@@ -556,8 +556,8 @@ void CScene::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera
 		m_ppGameObjects[i]->Render(pd3dCommandList, pCamera);
 	for (int i = 0; i < m_nShaders; i++) if (m_ppShaders[i]) 
 		m_ppShaders[i]->Render(pd3dCommandList, pCamera);
-	for (int i = 0; i < m_nEnvironmentMappingShaders; i++)
-		m_ppEnvironmentMappingShaders[i]->Render(pd3dCommandList, pCamera);
+	//for (int i = 0; i < m_nEnvironmentMappingShaders; i++)
+	//	m_ppEnvironmentMappingShaders[i]->Render(pd3dCommandList, pCamera);
 	
 
 

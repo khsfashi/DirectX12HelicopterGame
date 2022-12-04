@@ -612,6 +612,8 @@ void CGameFramework::FrameAdvance()
 
 	UpdateUI();
 
+	m_pScene->OnPreRender(m_pd3dDevice, m_pd3dCommandQueue, m_pd3dFence, m_hFenceEvent);
+
 	HRESULT hResult = m_pd3dCommandAllocator->Reset();
 	hResult = m_pd3dCommandList->Reset(m_pd3dCommandAllocator, NULL);
 
@@ -639,11 +641,7 @@ void CGameFramework::FrameAdvance()
 	if (m_pScene)
 	{
 		m_pScene->PrepareRender(m_pd3dCommandList);
-		m_pScene->OnPreRender(m_pd3dDevice, m_pd3dCommandQueue, m_pd3dFence, m_hFenceEvent);
-	}
-	UpdateShaderVariables();
-	if (m_pScene)
-	{
+		UpdateShaderVariables();
 		m_pScene->Render(m_pd3dCommandList, m_pCamera);
 		m_pScene->UpdateWater(m_GameTimer.GetTotalTime());
 	}
