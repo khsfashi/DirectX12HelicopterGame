@@ -37,8 +37,12 @@ struct CB_GAMEOBJECT_INFO
 class CTexture
 {
 public:
-	CTexture(int nTextureResources, UINT nResourceType, int nSamplers, int nRootParameters);
+	CTexture(int nTextureResources, UINT nResourceType, int nSamplers, int nRootParameters, int nRows = 1, int nCols = 1);
 	virtual ~CTexture();
+
+	XMFLOAT4X4						m_xmf4x4Texture;
+	int 							m_nRows = 1;
+	int 							m_nCols = 1;
 
 private:
 	int								m_nReferences = 0;
@@ -54,6 +58,13 @@ private:
 
 	DXGI_FORMAT*					m_pdxgiBufferFormats = NULL;
 	int*							m_pnBufferElements = NULL;
+
+	//Ãß°¡
+	int								*m_pnBufferStrides = NULL;
+
+	int 							m_nRow = 0;
+	int 							m_nCol = 0;
+
 
 	int								m_nRootParameters = 0;
 	int*							m_pnRootParameterIndices = NULL;
@@ -446,6 +457,8 @@ public:
 	virtual ~CDynamicCubeMappingObject();
 
 	virtual void OnPreRender(ID3D12GraphicsCommandList* pd3dCommandList, CScene* pScene);
+	//virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera = NULL);
+
 
 	CCamera* m_ppCameras[6];
 

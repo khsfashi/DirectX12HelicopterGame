@@ -9,7 +9,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-CTexture::CTexture(int nTextures, UINT nTextureType, int nSamplers, int nRootParameters)
+CTexture::CTexture(int nTextures, UINT nTextureType, int nSamplers, int nRootParameters, int nRows, int nCols)
 {
 	m_nTextureType = nTextureType;
 
@@ -29,6 +29,8 @@ CTexture::CTexture(int nTextures, UINT nTextureType, int nSamplers, int nRootPar
 		m_pnResourceTypes = new UINT[m_nTextures];
 		m_pdxgiBufferFormats = new DXGI_FORMAT[m_nTextures];
 		m_pnBufferElements = new int[m_nTextures];
+		m_pnBufferStrides = new int[m_nTextures];
+		for (int i = 0; i < m_nTextures; i++) m_pnBufferStrides[i] = 0;
 	}
 	m_nRootParameters = nRootParameters;
 	if (nRootParameters > 0) m_pnRootParameterIndices = new int[nRootParameters];
@@ -36,6 +38,11 @@ CTexture::CTexture(int nTextures, UINT nTextureType, int nSamplers, int nRootPar
 
 	m_nSamplers = nSamplers;
 	if (m_nSamplers > 0) m_pd3dSamplerGpuDescriptorHandles = new D3D12_GPU_DESCRIPTOR_HANDLE[m_nSamplers];
+
+	m_nRows = nRows;
+	m_nCols = nCols;
+
+	m_xmf4x4Texture = Matrix4x4::Identity();
 }
 
 CTexture::~CTexture()
@@ -119,6 +126,7 @@ void CTexture::LoadBuffer(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* p
 	m_pnResourceTypes[nIndex] = RESOURCE_BUFFER;
 	m_pdxgiBufferFormats[nIndex] = ndxgiFormat;
 	m_pnBufferElements[nIndex] = nElements;
+	m_pnBufferStrides[nIndex] = nStride;
 	m_ppd3dTextures[nIndex] = ::CreateBufferResource(pd3dDevice, pd3dCommandList, pData, nElements * nStride, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_GENERIC_READ, &m_ppd3dTextureUploadBuffers[nIndex]);
 }
 
@@ -234,7 +242,7 @@ D3D12_SHADER_RESOURCE_VIEW_DESC CTexture::GetShaderResourceViewDesc(int nIndex)
 		d3dShaderResourceViewDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
 		d3dShaderResourceViewDesc.Buffer.FirstElement = 0;
 		d3dShaderResourceViewDesc.Buffer.NumElements = m_pnBufferElements[nIndex];
-		d3dShaderResourceViewDesc.Buffer.StructureByteStride = 0;
+		d3dShaderResourceViewDesc.Buffer.StructureByteStride = m_pnBufferStrides[nIndex];
 		d3dShaderResourceViewDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
 		break;
 	}
@@ -283,6 +291,7 @@ void CMaterial::UpdateShaderVariables(ID3D12GraphicsCommandList *pd3dCommandList
 	pd3dCommandList->SetGraphicsRoot32BitConstants(1, 1, &m_nType, 32);
 
 	if (m_pTexture) m_pTexture->UpdateShaderVariables(pd3dCommandList);
+
 }
 
 void CMaterial::ReleaseShaderVariables()
@@ -464,6 +473,7 @@ void CGameObject::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pC
 
 void CGameObject::CreateShaderVariables(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList)
 {
+
 }
 
 void CGameObject::UpdateShaderVariables(ID3D12GraphicsCommandList *pd3dCommandList)
@@ -1379,7 +1389,6 @@ CDynamicCubeMappingObject::CDynamicCubeMappingObject(ID3D12Device* pd3dDevice, I
 		pd3dDevice->CreateRenderTargetView(pd3dResource, &d3dRTVDesc, m_pd3dRtvCPUDescriptorHandles[j]);
 		d3dRtvCPUDescriptorHandle.ptr += ::gnRtvDescriptorIncrementSize;
 	}
-	//m_ppMaterials = new CMaterial * [1];
 
 	CMaterial* pMaterial = new CMaterial();
 	pMaterial->m_xmf4AmbientColor = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -1388,9 +1397,6 @@ CDynamicCubeMappingObject::CDynamicCubeMappingObject(ID3D12Device* pd3dDevice, I
 	pMaterial->m_xmf4EmissiveColor = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
 
 	pMaterial->SetTexture(pTexture);
-
-	/*m_ppMaterials[0] = pMaterial;
-	if (m_ppMaterials[0]) m_ppMaterials[0]->AddRef();*/
 
 	SetMaterial(0, pMaterial);
 }
@@ -1430,7 +1436,13 @@ void CDynamicCubeMappingObject::OnPreRender(ID3D12GraphicsCommandList* pd3dComma
 
 		pd3dCommandList->OMSetRenderTargets(1, &m_pd3dRtvCPUDescriptorHandles[j], TRUE, &m_d3dDsvCPUDescriptorHandle);
 
-		pScene->Render(pd3dCommandList, m_ppCameras[j]);
+		//pScene->Render(pd3dCommandList, m_ppCameras[j]);
+		pScene->m_pSkyBox->Render(pd3dCommandList, m_ppCameras[j]);
+		pScene->m_pTerrain->Render(pd3dCommandList, m_ppCameras[j]);
+		pScene->m_pWater->Render(pd3dCommandList, m_ppCameras[j]);
+		for (int i = 0; i < pScene->m_nShaders; i++) 
+			pScene->m_ppShaders[i]->Render(pd3dCommandList, m_ppCameras[j]);
+		//pScene->MinimapRender(pd3dCommandList, m_ppCameras[j]);
 	}
 
 	::SynchronizeResourceTransition(pd3dCommandList, m_ppMaterials[0]->m_pTexture->GetResource(0), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_GENERIC_READ);

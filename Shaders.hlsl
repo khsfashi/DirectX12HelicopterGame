@@ -547,5 +547,5 @@ float4 PSCubeMapping(VS_LIGHTING_OUTPUT input) : SV_Target
 
 	//	return(float4(vReflected * 0.5f + 0.5f, 1.0f));
 		return(cCubeTextureColor);
-		//	return(cIllumination * cCubeTextureColor);
+		//return(cIllumination * cCubeTextureColor);
 }

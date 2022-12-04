@@ -510,21 +510,32 @@ void CObjectsShader::ReleaseObjects()
 
 void CObjectsShader::BuildPlayerBullet(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature, void* pContext)
 {
-	for (int i = 0; i < MAX_BULLET_COUNT; ++i)
-	{
-		//CreateCbvSrvDescriptorHeaps(pd3dDevice, 0, 17);
-		CGameObject* pSuperCobraModel = CGameObject::LoadGeometryFromFile(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, "Model/SuperCobra.bin", this);
+	//for (int i = 0; i < MAX_BULLET_COUNT; ++i)
+	//{
+	//	//CreateCbvSrvDescriptorHeaps(pd3dDevice, 0, 17);
+	//	CGameObject* pSuperCobraModel = CGameObject::LoadGeometryFromFile(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, "Model/SuperCobra.bin", this);
 
-		m_pPlayer->SetBullet(pSuperCobraModel, i);
-	}
+	//	m_pPlayer->SetBullet(pSuperCobraModel, i);
+	//}
 }
 
 void CObjectsShader::AnimateObjects(float fTimeElapsed)
 {
 	m_fElapsedTime = fTimeElapsed;
+
+	for (int i = 0; i < m_nObjects; ++i)
+	{
+		if (m_ppObjects[i] && m_ppObjects[i]->IsSpawn())
+		{
+			m_ppObjects[i]->Animate(m_fElapsedTime, NULL);
+			m_ppObjects[i]->UpdateTransform(NULL);
+		}
+	}
+
 	for (int i = 0; i < MAX_ENEMY_COUNT; ++i) m_ppObjects[i]->m_fDelayTime += fTimeElapsed;
 	for (int i = 0; i < MAX_ENEMY_COUNT; i++)
 	{
+
 		if (m_ppObjects[i]->GetPosition().y <= 500.0f || m_ppObjects[i]->IsCollisionByTerrain(m_pContext))
 		{
 			//ExplosionEffect(m_ppGameObjects[i]->GetPosition());
@@ -555,8 +566,6 @@ void CObjectsShader::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera 
 	{
 		if (m_ppObjects[j] && m_ppObjects[j]->IsSpawn())
 		{
-			m_ppObjects[j]->Animate(m_fElapsedTime, NULL);
-			m_ppObjects[j]->UpdateTransform(NULL);
 			m_ppObjects[j]->Render(pd3dCommandList, pCamera);
 		}
 	}
@@ -1230,17 +1239,29 @@ void CTerrainWaterShader::CreateShader(ID3D12Device* pd3dDevice, ID3D12GraphicsC
 
 CViewportShader::CViewportShader(CObjectsShader* pObjectsShader, CHeightMapTerrain* pTerrain, CTerrainWater* pWater)
 {
-	m_pObjectsShader = pObjectsShader;
+	//m_pObjectsShader = pObjectsShader;
 	m_pTerrain = pTerrain;
 	m_pWater = pWater;
 
 }
 
+CViewportShader::CViewportShader(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature)
+{
+	XMFLOAT3 xmf3Scale(18.0f, 6.0f, 18.0f);
+	XMFLOAT4 xmf4Color(0.0f, 0.5f, 0.0f, 0.0f);
+	m_pTerrain = new CHeightMapTerrain(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, _T("Image/HeightMap.raw"), 257, 257, 257, 257, xmf3Scale, xmf4Color);
+
+	float fWidth = m_pTerrain->GetWidth();
+	float fLength = m_pTerrain->GetLength();
+	m_pWater = new CTerrainWater(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, fWidth, fLength);
+	m_pWater->SetPosition(+(257 * xmf3Scale.x * 0.5f), 500.0f, +(257 * xmf3Scale.z * 0.5f));
+}
+
 
 CViewportShader::~CViewportShader()
 {
-	/*if (m_pTerrain)m_pTerrain->Release();
-	if (m_pWater)m_pWater->Release();*/
+	if (m_pTerrain)m_pTerrain->Release();
+	if (m_pWater)m_pWater->Release();
 }
 
 D3D12_DEPTH_STENCIL_DESC CViewportShader::CreateDepthStencilState()
@@ -1373,7 +1394,7 @@ void CViewportShader::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera
 	
 	m_pTerrain->Render(pd3dCommandList, pCamera);
 	m_pWater->Render(pd3dCommandList, pCamera);
-	m_pObjectsShader->Render(pd3dCommandList, pCamera);
+	//m_pObjectsShader->Render(pd3dCommandList, pCamera);
 
 	pd3dCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	pd3dCommandList->DrawInstanced(6, 1, 0, 0);
@@ -1526,14 +1547,42 @@ D3D12_INPUT_LAYOUT_DESC CDynamicCubeMappingShader::CreateInputLayout()
 	return(d3dInputLayoutDesc);
 }
 
-D3D12_SHADER_BYTECODE CDynamicCubeMappingShader::CreateVertexShader(ID3DBlob** ppd3dShaderBlob)
+D3D12_SHADER_BYTECODE CDynamicCubeMappingShader::CreateVertexShader()
 {
-	return(CShader::CompileShaderFromFile(L"Shaders.hlsl", "VSCubeMapping", "vs_5_1", ppd3dShaderBlob));
+	return(CShader::CompileShaderFromFile(L"Shaders.hlsl", "VSCubeMapping", "vs_5_1", &m_pd3dVertexShaderBlob));
 }
 
-D3D12_SHADER_BYTECODE CDynamicCubeMappingShader::CreatePixelShader(ID3DBlob** ppd3dShaderBlob)
+D3D12_SHADER_BYTECODE CDynamicCubeMappingShader::CreatePixelShader()
 {
-	return(CShader::CompileShaderFromFile(L"Shaders.hlsl", "PSCubeMapping", "ps_5_1", ppd3dShaderBlob));
+	return(CShader::CompileShaderFromFile(L"Shaders.hlsl", "PSCubeMapping", "ps_5_1", &m_pd3dPixelShaderBlob));
+}
+
+void CDynamicCubeMappingShader::CreateShaderVariables(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList)
+{
+	UINT ncbElementBytes = ((sizeof(CB_GAMEOBJECT_INFO) + 255) & ~255); //256ÀÇ ¹è¼ö
+	m_pd3dcbGameObjects = ::CreateBufferResource(pd3dDevice, pd3dCommandList, NULL, ncbElementBytes * m_nObjects, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, NULL);
+
+	m_pd3dcbGameObjects->Map(0, NULL, (void**)&m_pcbMappedGameObjects);
+}
+
+void CDynamicCubeMappingShader::UpdateShaderVariables(ID3D12GraphicsCommandList* pd3dCommandList)
+{
+	UINT ncbElementBytes = ((sizeof(CB_GAMEOBJECT_INFO) + 255) & ~255);
+	for (int j = 0; j < m_nObjects; j++)
+	{
+		CB_GAMEOBJECT_INFO* pbMappedcbGameObject = (CB_GAMEOBJECT_INFO*)((UINT8*)m_pcbMappedGameObjects + (j * ncbElementBytes));
+		XMStoreFloat4x4(&pbMappedcbGameObject->m_xmf4x4World, XMMatrixTranspose(XMLoadFloat4x4(&m_ppObjects[j]->m_xmf4x4World)));
+		//if (m_ppObjects[j]->m_pMaterial) pbMappedcbGameObject->m_nMaterial = m_ppObjects[j]->m_pMaterial->m_nReflection;
+	}
+}
+
+void CDynamicCubeMappingShader::ReleaseShaderVariables()
+{
+	if (m_pd3dcbGameObjects)
+	{
+		m_pd3dcbGameObjects->Unmap(0, NULL);
+		m_pd3dcbGameObjects->Release();
+	}
 }
 
 
@@ -1544,13 +1593,13 @@ void CDynamicCubeMappingShader::BuildObjects(ID3D12Device* pd3dDevice, ID3D12Gra
 	pd3dDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_pd3dCommandAllocator, NULL, __uuidof(ID3D12GraphicsCommandList), (void**)&m_pd3dCommandList);
 	m_pd3dCommandList->Close();
 
-	m_nObjects = 2;
+	m_nObjects = 1;
 	m_ppObjects = new CGameObject * [m_nObjects];
 
 	CreateShaderVariables(pd3dDevice, pd3dCommandList);
 
 	CreateCbvSrvDescriptorHeaps(pd3dDevice, m_nObjects, m_nObjects);
-	//CreateConstantBufferViews(pd3dDevice, m_nObjects, m_pd3dcbGameObjects, ((sizeof(CB_GAMEOBJECT_INFO) + 255) & ~255));
+	CreateConstantBufferViews(pd3dDevice, m_nObjects, m_pd3dcbGameObjects, ((sizeof(CB_GAMEOBJECT_INFO) + 255) & ~255));
 
 	D3D12_GPU_DESCRIPTOR_HANDLE d3dCbvGPUDescriptorStartHandle = m_d3dCbvGPUDescriptorStartHandle;
 
@@ -1583,7 +1632,7 @@ void CDynamicCubeMappingShader::BuildObjects(ID3D12Device* pd3dDevice, ID3D12Gra
 		float xPosition = xmf2TerrainCenter.x + ((i + 1) * 150.0f) * ((i % 2) ? +1.0f : -1.0f);
 		float zPosition = xmf2TerrainCenter.y + ((i + 1) * 150.0f) * ((i % 2) ? +1.0f : -1.0f);
 		float fHeight = pTerrain->GetHeight(xPosition, zPosition);
-		m_ppObjects[i]->SetPosition(xPosition, fHeight + 150.0f, zPosition);
+		m_ppObjects[i]->SetPosition(950.0f, 750.0f, 1600.0f);
 
 		//m_ppObjects[i]->SetCbvGPUDescriptorHandlePtr(d3dCbvGPUDescriptorStartHandle.ptr);
 
@@ -1595,7 +1644,11 @@ void CDynamicCubeMappingShader::BuildObjects(ID3D12Device* pd3dDevice, ID3D12Gra
 
 void CDynamicCubeMappingShader::ReleaseObjects()
 {
-	CObjectsShader::ReleaseObjects();
+	if (m_ppObjects)
+	{
+		for (int j = 0; j < m_nObjects; j++) if (m_ppObjects[j]) m_ppObjects[j]->Release();
+		delete[] m_ppObjects;
+	}
 
 	if (m_pd3dDsvDescriptorHeap) m_pd3dDsvDescriptorHeap->Release();
 	if (m_pd3dRtvDescriptorHeap) m_pd3dRtvDescriptorHeap->Release();
@@ -1606,7 +1659,7 @@ void CDynamicCubeMappingShader::ReleaseObjects()
 
 void CDynamicCubeMappingShader::ReleaseUploadBuffers()
 {
-	CObjectsShader::ReleaseUploadBuffers();
+	for (int j = 0; j < m_nObjects; j++) if (m_ppObjects[j]) m_ppObjects[j]->ReleaseUploadBuffers();
 }
 
 void CDynamicCubeMappingShader::OnPreRender(ID3D12Device* pd3dDevice, ID3D12CommandQueue* pd3dCommandQueue, ID3D12Fence* pd3dFence, HANDLE hFenceEvent, CScene* pScene)
@@ -1630,6 +1683,15 @@ void CDynamicCubeMappingShader::OnPreRender(ID3D12Device* pd3dDevice, ID3D12Comm
 
 void CDynamicCubeMappingShader::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera)
 {
-	CObjectsShader::Render(pd3dCommandList, pCamera);
+	CShader::Render(pd3dCommandList, pCamera);
+
+	for (int j = 0; j < m_nObjects; j++)
+	{
+		if (m_ppObjects[j]) {
+			m_ppObjects[j]->UpdateTransform(NULL);
+			m_ppObjects[j]->Render(pd3dCommandList, pCamera);
+		}
+		
+	}
 }
 

@@ -131,6 +131,14 @@ class CSphereMeshIlluminated : public CMeshIlluminated
 public:
 	CSphereMeshIlluminated(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, float fRadius = 2.0f, UINT nSlices = 20, UINT nStacks = 20);
 	virtual ~CSphereMeshIlluminated();
+
+	//virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList, int nSubSet);
+
+private:
+	/*ID3D12Resource* m_pd3dIndexBuffer = NULL;
+	ID3D12Resource* m_pd3dIndexUploadBuffer = NULL;
+	D3D12_INDEX_BUFFER_VIEW			m_d3dIndexBufferView;
+	int m_nIndices;*/
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

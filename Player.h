@@ -128,6 +128,7 @@ public:
 
 	CGameObject					*m_pMainRotorFrame = NULL;
 	CGameObject					*m_pTailRotorFrame = NULL;
+	CGameObject					*m_bulletModel = NULL;
 
 private:
 	virtual void PrepareAnimate();

@@ -314,13 +314,31 @@ CAirplanePlayer::CAirplanePlayer(ID3D12Device *pd3dDevice, ID3D12GraphicsCommand
 
 	m_pShader = new CPlayerShader();
 	m_pShader->CreateShader(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature);
-	m_pShader->CreateCbvSrvDescriptorHeaps(pd3dDevice, 0, 17); //Mi24(1)
+	m_pShader->CreateCbvSrvDescriptorHeaps(pd3dDevice, 0, 17 + 170); //Mi24(1)
 
+	m_nMaxBullet = 10;
 	m_ppBullets = new CBulletObject * [m_nMaxBullet];
 
 	CGameObject *pGameObject = CGameObject::LoadGeometryFromFile(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, "Model/SuperCobra.bin", m_pShader);
 	pGameObject->SetScale(2.0f, 2.0f, 2.0f);
 	SetChild(pGameObject);
+
+	CGameObject* pSuperCobraModel = CGameObject::LoadGeometryFromFile(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature, "Model/SuperCobra.bin", m_pShader);
+
+	CBulletObject* pBulletObject = NULL;
+	for (int i = 0; i < MAX_BULLET_COUNT; ++i)
+	{
+		pBulletObject = new CBulletObject();
+		pBulletObject->SetChild(pSuperCobraModel);
+		pBulletObject->PrepareAnimate();
+		pBulletObject->SetPosition(GetPosition());
+		pBulletObject->SetMaxVelocity(30.0f);
+		pBulletObject->SetColor(XMFLOAT4(1.0f, 0.25f, 0.05f, 0.5f), XMFLOAT4(1.0f, 0.25f, 0.05f, 0.5f), XMFLOAT4(1.0f, 0.25f, 0.05f, 0.5f));
+
+
+		m_ppBullets[i] = pBulletObject;
+	}
+	
 
 	PrepareAnimate();
 
@@ -405,7 +423,7 @@ void CAirplanePlayer::Fired()
 
 void CAirplanePlayer::SetBullet(CGameObject* input, int i)
 {
-	CBulletObject* pBulletObject = NULL;
+	/*CBulletObject* pBulletObject = NULL;
 
 	pBulletObject = new CBulletObject();
 	pBulletObject->SetChild(input);
@@ -415,7 +433,7 @@ void CAirplanePlayer::SetBullet(CGameObject* input, int i)
 	pBulletObject->SetColor(XMFLOAT4(1.0f, 0.25f, 0.05f, 0.5f), XMFLOAT4(1.0f, 0.25f, 0.05f, 0.5f), XMFLOAT4(1.0f, 0.25f, 0.05f, 0.5f));
 
 
-	m_ppBullets[i] = pBulletObject;
+	m_ppBullets[i] = pBulletObject;*/
 }
 
 CCamera *CAirplanePlayer::ChangeCamera(DWORD nNewCameraMode, float fTimeElapsed)

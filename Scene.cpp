@@ -79,6 +79,13 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 	m_pWater = new CTerrainWater(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, fWidth, fLength);
 	m_pWater->SetPosition(+(257 * xmf3Scale.x * 0.5f), 500.0f, +(257 * xmf3Scale.z * 0.5f));
 
+	m_nEnvironmentMappingShaders = 1;
+	m_ppEnvironmentMappingShaders = new CDynamicCubeMappingShader * [m_nEnvironmentMappingShaders];
+
+	m_ppEnvironmentMappingShaders[0] = new CDynamicCubeMappingShader(256);
+	m_ppEnvironmentMappingShaders[0]->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
+	m_ppEnvironmentMappingShaders[0]->BuildObjects(pd3dDevice, pd3dCommandList, m_pTerrain);
+
 	m_nShaders = 2;
 	m_ppShaders = new CShader*[m_nShaders];
 
@@ -94,14 +101,8 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 
 	m_ppShaders[1] = pBillboardObjectsShader;
 
-	m_nEnvironmentMappingShaders = 1;
-	m_ppEnvironmentMappingShaders = new CDynamicCubeMappingShader * [m_nEnvironmentMappingShaders];
-
-	m_ppEnvironmentMappingShaders[0] = new CDynamicCubeMappingShader(256);
-	m_ppEnvironmentMappingShaders[0]->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
-	m_ppEnvironmentMappingShaders[0]->BuildObjects(pd3dDevice, pd3dCommandList, m_pTerrain);
-
-	m_pMapToViewport = new CViewportShader(pObjectsShader, m_pTerrain, m_pWater);
+	//m_pMapToViewport = new CViewportShader(pObjectsShader, m_pTerrain, m_pWater);
+	m_pMapToViewport = new CViewportShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
 	m_pMapToViewport->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
 	m_pMapToViewport->BuildObjects(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, NULL);
 
@@ -527,7 +528,15 @@ void CScene::UpdateWater(float fCurrentTime)
 
 void CScene::PrepareRender(ID3D12GraphicsCommandList* pd3dCommandList)
 {
-	if (m_pd3dGraphicsRootSignature) pd3dCommandList->SetGraphicsRootSignature(m_pd3dGraphicsRootSignature);
+	//if (m_pd3dGraphicsRootSignature) 
+	pd3dCommandList->SetGraphicsRootSignature(m_pd3dGraphicsRootSignature);
+	UpdateShaderVariables(pd3dCommandList);
+
+	if (m_pd3dcbLights)
+	{
+		D3D12_GPU_VIRTUAL_ADDRESS d3dcbLightsGpuVirtualAddress = m_pd3dcbLights->GetGPUVirtualAddress();
+		pd3dCommandList->SetGraphicsRootConstantBufferView(2, d3dcbLightsGpuVirtualAddress); //Lights
+	}
 }
 
 void CScene::OnPreRender(ID3D12Device* pd3dDevice, ID3D12CommandQueue* pd3dCommandQueue, ID3D12Fence* pd3dFence, HANDLE hFenceEvent)
@@ -543,25 +552,25 @@ void CScene::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera
 	pCamera->SetViewportsAndScissorRects(pd3dCommandList);
 	pCamera->UpdateShaderVariables(pd3dCommandList);
 
-	UpdateShaderVariables(pd3dCommandList);
+	//UpdateShaderVariables(pd3dCommandList);
 
-	D3D12_GPU_VIRTUAL_ADDRESS d3dcbLightsGpuVirtualAddress = m_pd3dcbLights->GetGPUVirtualAddress();
-	pd3dCommandList->SetGraphicsRootConstantBufferView(2, d3dcbLightsGpuVirtualAddress); //Lights
+	//D3D12_GPU_VIRTUAL_ADDRESS d3dcbLightsGpuVirtualAddress = m_pd3dcbLights->GetGPUVirtualAddress();
+	//pd3dCommandList->SetGraphicsRootConstantBufferView(2, d3dcbLightsGpuVirtualAddress); //Lights
 
 	if (m_pSkyBox) m_pSkyBox->Render(pd3dCommandList, pCamera); 
 	if (m_pTerrain) m_pTerrain->Render(pd3dCommandList, pCamera);
-	if (m_pWater) m_pWater->Render(pd3dCommandList, pCamera);
+
 
 	for (int i = 0; i < m_nGameObjects; i++) if (m_ppGameObjects[i]) 
 		m_ppGameObjects[i]->Render(pd3dCommandList, pCamera);
 	for (int i = 0; i < m_nShaders; i++) if (m_ppShaders[i]) 
 		m_ppShaders[i]->Render(pd3dCommandList, pCamera);
+	if (m_pWater) m_pWater->Render(pd3dCommandList, pCamera);
+
 	for (int i = 0; i < m_nEnvironmentMappingShaders; i++)
 		m_ppEnvironmentMappingShaders[i]->Render(pd3dCommandList, pCamera);
-	
 
-
-	m_pViewCamera->SetOffset(XMFLOAT3(0.0f, 500.0f, -10.0f));
+	/*m_pViewCamera->SetOffset(XMFLOAT3(0.0f, 500.0f, -10.0f));
 	XMFLOAT3 pos = m_pPlayer->GetPosition();
 	m_pViewCamera->SetPosition(XMFLOAT3(pos.x, pos.y + 1000.0f, pos.z));
 	m_pViewCamera->SetLookAt(pCamera->GetLookAtPosition());
@@ -581,11 +590,18 @@ void CScene::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera
 	if (m_pMapToViewport) m_pMapToViewport->Render(pd3dCommandList, m_pViewCamera);
 
 	pCamera->SetViewportsAndScissorRects(pd3dCommandList);
-	pCamera->UpdateShaderVariables(pd3dCommandList);
+	pCamera->UpdateShaderVariables(pd3dCommandList);*/
+
+	
 }
 
 void CScene::MinimapRender(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera)
 {
+	pCamera->SetViewportsAndScissorRects(pd3dCommandList);
+	pCamera->UpdateShaderVariables(pd3dCommandList);
+
+	//UpdateShaderVariables(pd3dCommandList);
+
 	m_pViewCamera->SetOffset(XMFLOAT3(0.0f, 500.0f, -10.0f));
 	XMFLOAT3 pos = m_pPlayer->GetPosition();
 	m_pViewCamera->SetPosition(XMFLOAT3(pos.x, pos.y + 1000.0f, pos.z));

@@ -839,7 +839,7 @@ void CMeshIlluminated::CalculateTriangleListVertexNormals(XMFLOAT3* pxmf3Normals
 	}
 }
 
-void CMeshIlluminated::CalculateTriangleListVertexNormals(XMFLOAT3* pxmf3Normals, XMFLOAT3* pxmf3Positions, UINT nVertices, UINT* pnIndices, UINT nIndices)
+void CMeshIlluminated::CalculateTriangleListVertexNormals(XMFLOAT3* pxmf3Normals, XMFLOAT3* pxmf3Positions, UINT nVertices, UINT* pnIndices, UINT nIndices) 
 {
 	UINT nPrimitives = (pnIndices) ? (nIndices / 3) : (nVertices / 3);
 	XMFLOAT3 xmf3SumOfNormal, xmf3Edge01, xmf3Edge02, xmf3Normal;
@@ -911,8 +911,11 @@ void CMeshIlluminated::CalculateVertexNormals(XMFLOAT3* pxmf3Normals, XMFLOAT3* 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 //
+#define _WITH_SPHERE_INDEX_BUFFER
+
 CSphereMeshIlluminated::CSphereMeshIlluminated(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, float fRadius, UINT nSlices, UINT nStacks) : CMeshIlluminated(pd3dDevice, pd3dCommandList)
 {
+#ifdef _WITH_SPHERE_INDEX_BUFFER
 	int m_nStride = sizeof(CIlluminatedVertex);
 	m_d3dPrimitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
@@ -938,37 +941,45 @@ CSphereMeshIlluminated::CSphereMeshIlluminated(ID3D12Device* pd3dDevice, ID3D12G
 	}
 	pxmf3Positions[k] = XMFLOAT3(0.0f, -fRadius, 0.0f);
 
-	int m_nIndices = (nSlices * 3) * 2 + (nSlices * (nStacks - 2) * 3 * 2);
-	UINT* pnIndices = new UINT[m_nIndices];
+	m_nSubMeshes = 1;
+	m_pnSubSetIndices = new int[m_nSubMeshes];
+	m_ppnSubSetIndices = new UINT * [m_nSubMeshes];
+
+	m_ppd3dSubSetIndexBuffers = new ID3D12Resource * [m_nSubMeshes];
+	m_ppd3dSubSetIndexUploadBuffers = new ID3D12Resource * [m_nSubMeshes];
+	m_pd3dSubSetIndexBufferViews = new D3D12_INDEX_BUFFER_VIEW[m_nSubMeshes];
+
+	m_pnSubSetIndices[0] = (nSlices * 3) * 2 + (nSlices * (nStacks - 2) * 3 * 2);
+	m_ppnSubSetIndices[0] = new UINT[m_pnSubSetIndices[0]];
 
 	k = 0;
 	for (UINT i = 0; i < nSlices; i++)
 	{
-		pnIndices[k++] = 0;
-		pnIndices[k++] = 1 + ((i + 1) % nSlices);
-		pnIndices[k++] = 1 + i;
+		m_ppnSubSetIndices[0][k++] = 0;
+		m_ppnSubSetIndices[0][k++] = 1 + ((i + 1) % nSlices);
+		m_ppnSubSetIndices[0][k++] = 1 + i;
 	}
 	for (UINT j = 0; j < nStacks - 2; j++)
 	{
 		for (UINT i = 0; i < nSlices; i++)
 		{
-			pnIndices[k++] = 1 + (i + (j * nSlices));
-			pnIndices[k++] = 1 + (((i + 1) % nSlices) + (j * nSlices));
-			pnIndices[k++] = 1 + (i + ((j + 1) * nSlices));
-			pnIndices[k++] = 1 + (i + ((j + 1) * nSlices));
-			pnIndices[k++] = 1 + (((i + 1) % nSlices) + (j * nSlices));
-			pnIndices[k++] = 1 + (((i + 1) % nSlices) + ((j + 1) * nSlices));
+			m_ppnSubSetIndices[0][k++] = 1 + (i + (j * nSlices));
+			m_ppnSubSetIndices[0][k++] = 1 + (((i + 1) % nSlices) + (j * nSlices));
+			m_ppnSubSetIndices[0][k++] = 1 + (i + ((j + 1) * nSlices));
+			m_ppnSubSetIndices[0][k++] = 1 + (i + ((j + 1) * nSlices));
+			m_ppnSubSetIndices[0][k++] = 1 + (((i + 1) % nSlices) + (j * nSlices));
+			m_ppnSubSetIndices[0][k++] = 1 + (((i + 1) % nSlices) + ((j + 1) * nSlices));
 		}
 	}
 	for (UINT i = 0; i < nSlices; i++)
 	{
-		pnIndices[k++] = (m_nVertices - 1);
-		pnIndices[k++] = ((m_nVertices - 1) - nSlices) + i;
-		pnIndices[k++] = ((m_nVertices - 1) - nSlices) + ((i + 1) % nSlices);
+		m_ppnSubSetIndices[0][k++] = (m_nVertices - 1);
+		m_ppnSubSetIndices[0][k++] = ((m_nVertices - 1) - nSlices) + i;
+		m_ppnSubSetIndices[0][k++] = ((m_nVertices - 1) - nSlices) + ((i + 1) % nSlices);
 	}
 
 	XMFLOAT3* pxmf3Normals = new XMFLOAT3[m_nVertices];
-	CalculateVertexNormals(pxmf3Normals, pxmf3Positions, m_nVertices, pnIndices, m_nIndices);
+	CalculateVertexNormals(pxmf3Normals, pxmf3Positions, m_nVertices, m_ppnSubSetIndices[0], m_pnSubSetIndices[0]);
 
 	CIlluminatedVertex* pVertices = new CIlluminatedVertex[m_nVertices];
 	for (UINT i = 0; i < m_nVertices; i++) pVertices[i] = CIlluminatedVertex(pxmf3Positions[i], pxmf3Normals[i]);
@@ -982,16 +993,90 @@ CSphereMeshIlluminated::CSphereMeshIlluminated(ID3D12Device* pd3dDevice, ID3D12G
 	if (pxmf3Normals) delete[] pxmf3Normals;
 	if (pVertices) delete[] pVertices;
 
-	/*m_pd3dIndexBuffer = ::CreateBufferResource(pd3dDevice, pd3dCommandList, pnIndices, sizeof(UINT) * m_nIndices, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_INDEX_BUFFER, &m_pd3dIndexUploadBuffer);
+	m_ppd3dSubSetIndexBuffers[0] = ::CreateBufferResource(pd3dDevice, pd3dCommandList, m_ppnSubSetIndices[0], sizeof(UINT) * m_pnSubSetIndices[0], D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_INDEX_BUFFER, &m_ppd3dSubSetIndexUploadBuffers[0]);
 
-	m_d3dIndexBufferView.BufferLocation = m_pd3dIndexBuffer->GetGPUVirtualAddress();
-	m_d3dIndexBufferView.Format = DXGI_FORMAT_R32_UINT;
-	m_d3dIndexBufferView.SizeInBytes = sizeof(UINT) * m_nIndices;*/
+	m_pd3dSubSetIndexBufferViews[0].BufferLocation = m_ppd3dSubSetIndexBuffers[0]->GetGPUVirtualAddress();
+	m_pd3dSubSetIndexBufferViews[0].Format = DXGI_FORMAT_R32_UINT;
+	m_pd3dSubSetIndexBufferViews[0].SizeInBytes = sizeof(UINT) * m_pnSubSetIndices[0];
+#else
+	//if (m_ppnSubSetIndices[0]) delete[] m_ppnSubSetIndices[0];
 
-	if (pnIndices) delete[] pnIndices;
+	int m_nStride = sizeof(CIlluminatedVertex);
+	m_d3dPrimitiveTopology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+
+	int k = 0;
+
+	m_nVertices = (nSlices * nStacks) * 3 * 2;
+
+	XMFLOAT3* pxmf3Positions = new XMFLOAT3[m_nVertices];
+
+	k = 0;
+	float theta_i, theta_ii, phi_j, phi_jj, fRadius_j, fRadius_jj, y_j, y_jj;
+	for (int j = 0; j < nStacks; j++)
+	{
+		phi_j = float(XM_PI / nStacks) * j;
+		phi_jj = float(XM_PI / nStacks) * (j + 1);
+		fRadius_j = fRadius * sinf(phi_j);
+		fRadius_jj = fRadius * sinf(phi_jj);
+		y_j = fRadius * cosf(phi_j);
+		y_jj = fRadius * cosf(phi_jj);
+		for (int i = 0; i < nSlices; i++)
+		{
+			theta_i = float(2 * XM_PI / nSlices) * i;
+			theta_ii = float(2 * XM_PI / nSlices) * (i + 1);
+			pxmf3Positions[k++] = XMFLOAT3(fRadius_j * cosf(theta_i), y_j, fRadius_j * sinf(theta_i));
+			pxmf3Positions[k++] = XMFLOAT3(fRadius_jj * cosf(theta_i), y_jj, fRadius_jj * sinf(theta_i));
+			pxmf3Positions[k++] = XMFLOAT3(fRadius_j * cosf(theta_ii), y_j, fRadius_j * sinf(theta_ii));
+			pxmf3Positions[k++] = XMFLOAT3(fRadius_jj * cosf(theta_i), y_jj, fRadius_jj * sinf(theta_i));
+			pxmf3Positions[k++] = XMFLOAT3(fRadius_jj * cosf(theta_ii), y_jj, fRadius_jj * sinf(theta_ii));
+			pxmf3Positions[k++] = XMFLOAT3(fRadius_j * cosf(theta_ii), y_j, fRadius_j * sinf(theta_ii));
+		}
+	}
+
+	XMFLOAT3* pxmf3Normals = new XMFLOAT3[m_nVertices];
+	CalculateVertexNormals(pxmf3Normals, pxmf3Positions, m_nVertices, NULL, 0);
+
+	CIlluminatedVertex* pVertices = new CIlluminatedVertex[m_nVertices];
+	for (UINT i = 0; i < m_nVertices; i++) pVertices[i] = CIlluminatedVertex(pxmf3Positions[i], pxmf3Normals[i]);
+
+	m_pd3dPositionBuffer = ::CreateBufferResource(pd3dDevice, pd3dCommandList, pVertices, m_nStride * m_nVertices, D3D12_HEAP_TYPE_DEFAULT, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, &m_pd3dPositionUploadBuffer);
+
+	m_d3dPositionBufferView.BufferLocation = m_pd3dPositionBuffer->GetGPUVirtualAddress();
+	m_d3dPositionBufferView.StrideInBytes = m_nStride;
+	m_d3dPositionBufferView.SizeInBytes = m_nStride * m_nVertices;
+
+	if (pxmf3Positions) delete[] pxmf3Positions;
+	if (pxmf3Normals) delete[] pxmf3Normals;
+
+	if (pVertices) delete[] pVertices;
+#endif
 }
 
 CSphereMeshIlluminated::~CSphereMeshIlluminated()
 {
 }
+
+//void CSphereMeshIlluminated::Render(ID3D12GraphicsCommandList* pd3dCommandList, int nSubSet)
+//{
+//	pd3dCommandList->IASetPrimitiveTopology(m_d3dPrimitiveTopology);
+//
+//	D3D12_VERTEX_BUFFER_VIEW pVertexBufferViews[1] = { m_d3dPositionBufferView };
+//	pd3dCommandList->IASetVertexBuffers(m_nSlot, 1, pVertexBufferViews);
+//
+//	if (m_pd3dIndexBuffer)
+//	{
+//		pd3dCommandList->IASetIndexBuffer(&(m_d3dIndexBufferView));
+//		pd3dCommandList->DrawIndexedInstanced(m_nIndices, 1, 0, 0, 0);
+//	}
+//
+//	if ((m_nSubMeshes > 0) && (nSubSet < m_nSubMeshes))
+//	{
+//		pd3dCommandList->IASetIndexBuffer(&(m_pd3dSubSetIndexBufferViews[nSubSet]));
+//		pd3dCommandList->DrawIndexedInstanced(m_pnSubSetIndices[nSubSet], 1, 0, 0, 0);
+//	}
+//	else
+//	{
+//		pd3dCommandList->DrawInstanced(m_nVertices, 1, m_nOffset, 0);
+//	}
+//}
 

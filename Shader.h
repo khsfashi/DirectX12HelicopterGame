@@ -277,6 +277,7 @@ class CViewportShader : public CShader
 {
 public:
 	CViewportShader(CObjectsShader* pObjectsShader, CHeightMapTerrain* pTerrain, CTerrainWater* pWater);
+	CViewportShader(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature);
 	virtual ~CViewportShader();
 
 	virtual D3D12_DEPTH_STENCIL_DESC CreateDepthStencilState();
@@ -337,17 +338,22 @@ private:
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-class CDynamicCubeMappingShader : public CObjectsShader
+class CDynamicCubeMappingShader : public CShader
 {
 public:
 	CDynamicCubeMappingShader(UINT nCubeMapSize = 256);
 	virtual ~CDynamicCubeMappingShader();
 
 	virtual D3D12_INPUT_LAYOUT_DESC CreateInputLayout();
-	virtual D3D12_SHADER_BYTECODE CreateVertexShader(ID3DBlob** ppd3dShaderBlob);
-	virtual D3D12_SHADER_BYTECODE CreatePixelShader(ID3DBlob** ppd3dShaderBlob);
+	virtual D3D12_SHADER_BYTECODE CreateVertexShader();
+	virtual D3D12_SHADER_BYTECODE CreatePixelShader();
 
+	virtual void CreateShaderVariables(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList);
+	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* pd3dCommandList);
+	virtual void ReleaseShaderVariables();
 
+	CGameObject** m_ppObjects = 0;
+	int								m_nObjects = 0;
 
 	virtual void BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, void* pContext = NULL);
 	virtual void ReleaseObjects();
@@ -365,4 +371,7 @@ protected:
 
 	ID3D12DescriptorHeap* m_pd3dRtvDescriptorHeap = NULL;
 	ID3D12DescriptorHeap* m_pd3dDsvDescriptorHeap = NULL;
+
+	ID3D12Resource* m_pd3dcbGameObjects = NULL;
+	CB_GAMEOBJECT_INFO* m_pcbMappedGameObjects = NULL;
 };
