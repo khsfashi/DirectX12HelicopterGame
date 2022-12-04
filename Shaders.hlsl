@@ -164,6 +164,27 @@ float4 PSStandard(VS_STANDARD_OUTPUT input) : SV_TARGET
 	return(cColor);
 }
 
+VS_STANDARD_OUTPUT VSOutLine(VS_STANDARD_INPUT input)
+{
+	VS_STANDARD_OUTPUT output;
+
+	output.positionW = (float3)mul(float4(input.position, 1.0f), gmtxGameObject);
+	float fScale = 1.00175f + length(gvCameraPosition - output.positionW) * 0.00035f;
+	output.positionW = (float3)mul(float4(input.position * fScale, 1.0f), gmtxGameObject);
+	output.normalW = mul(input.normal, (float3x3)gmtxGameObject);
+	output.tangentW = (float3)mul(float4(input.tangent, 1.0f), gmtxGameObject);
+	output.bitangentW = (float3)mul(float4(input.bitangent, 1.0f), gmtxGameObject);
+	output.position = mul(mul(float4(output.positionW, 1.0f), gmtxView), gmtxProjection);
+	output.uv = input.uv;
+
+	return(output);
+}
+
+float4 PSOutline(VS_STANDARD_OUTPUT input) : SV_TARGET
+{
+	return(float4(1.0f, 0.2f, 0.2f, 0.0f));
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
 struct VS_SKYBOX_CUBEMAP_INPUT

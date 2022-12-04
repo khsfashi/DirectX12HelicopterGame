@@ -111,6 +111,10 @@ void CScene::BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *p
 	//m_pViewCamera->GenerateViewMatrix(XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f));
 
 	CreateShaderVariables(pd3dDevice, pd3dCommandList);
+
+	m_pOutlineShader = new COutlineShader();
+	m_pOutlineShader->CreateShader(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature);
+	m_pOutlineShader->CreateShaderVariables(pd3dDevice, pd3dCommandList);
 }
 
 void CScene::ReleaseObjects()
@@ -146,6 +150,12 @@ void CScene::ReleaseObjects()
 		m_pMapToViewport->ReleaseShaderVariables();
 		m_pMapToViewport->ReleaseObjects();
 		m_pMapToViewport->Release();
+	}
+
+	if (m_pOutlineShader)
+	{
+		m_pOutlineShader->ReleaseShaderVariables();
+		delete m_pOutlineShader;
 	}
 
 	if (m_pTerrain) delete m_pTerrain;
@@ -559,7 +569,22 @@ void CScene::Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera
 	//for (int i = 0; i < m_nEnvironmentMappingShaders; i++)
 	//	m_ppEnvironmentMappingShaders[i]->Render(pd3dCommandList, pCamera);
 	
-
+	m_bIsOutline = true;
+	if (m_bIsOutline)
+	{
+		CGameObject** ppObjects = m_ppShaders[0]->GetObjects();
+		if (ppObjects)
+		{
+			for (int i = 0; i < MAX_ENEMY_COUNT; ++i)
+			{
+				m_pOutlineShader->UpdateShaderVariable(pd3dCommandList, ppObjects[i]);
+				m_pOutlineShader->Render(pd3dCommandList, pCamera, 0);
+				ppObjects[i]->Render(pd3dCommandList, pCamera);
+				m_pOutlineShader->Render(pd3dCommandList, pCamera, 1);
+				ppObjects[i]->Render(pd3dCommandList, pCamera);
+			}
+		}
+	}
 
 	m_pViewCamera->SetOffset(XMFLOAT3(0.0f, 500.0f, -10.0f));
 	XMFLOAT3 pos = m_pPlayer->GetPosition();

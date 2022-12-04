@@ -78,6 +78,7 @@ public:
 	virtual XMFLOAT3 Intersect() { return XMFLOAT3(); }
 	virtual void BuildPlayerBullet(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature, void* pContext = NULL) { }
 	virtual XMFLOAT2 CaculObjectPlayerDistance(int objnum) { return XMFLOAT2(); }
+	virtual CGameObject** GetObjects() { return NULL; }
 
 	void CreateCbvSrvDescriptorHeaps(ID3D12Device *pd3dDevice, int nConstantBufferViews, int nShaderResourceViews);
 	void CreateConstantBufferViews(ID3D12Device *pd3dDevice, int nConstantBufferViews, ID3D12Resource *pd3dConstantBuffers, UINT nStride);
@@ -147,6 +148,8 @@ public:
 	void CheckPlayerByBulletCollisions();
 	void CheckObjectByBulletCollisions();
 	virtual XMFLOAT2 CaculObjectPlayerDistance(int objnum);
+
+	virtual CGameObject** GetObjects() { return m_ppObjects; }
 
 protected:
 	float							m_fElapsedTime = 0.0f;
@@ -365,4 +368,32 @@ protected:
 
 	ID3D12DescriptorHeap* m_pd3dRtvDescriptorHeap = NULL;
 	ID3D12DescriptorHeap* m_pd3dDsvDescriptorHeap = NULL;
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+class COutlineShader : public CStandardShader
+{
+public:
+	COutlineShader();
+	virtual ~COutlineShader();
+
+	virtual D3D12_INPUT_LAYOUT_DESC CreateInputLayout();
+	virtual D3D12_SHADER_BYTECODE CreateVertexShader();
+	virtual D3D12_SHADER_BYTECODE CreatePixelShader();
+
+	virtual void CreateShader(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature);
+
+	virtual void CreateShaderVariables(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList);
+	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* pd3dCommandList);
+	virtual void ReleaseShaderVariables();
+
+	virtual void UpdateShaderVariable(ID3D12GraphicsCommandList* pd3dCommandList, CGameObject** pGameObject);
+
+	virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera, UINT nPipelineState = 0);
+
+protected:
+	ID3D12Resource** m_pd3dcbGameObject = NULL;
+	CB_GAMEOBJECT_INFO** m_pcbMappedGameObject = NULL;
+
 };

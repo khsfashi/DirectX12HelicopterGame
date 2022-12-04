@@ -101,4 +101,7 @@ public:
 	CViewportShader						*m_pMapToViewport = NULL;
 
 	CCamera								*m_pViewCamera = NULL;
+
+	COutlineShader						*m_pOutlineShader = NULL;
+	bool								m_bIsOutline = false;
 };
