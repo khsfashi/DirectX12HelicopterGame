@@ -14,22 +14,22 @@ public:
 	CShader();
 	virtual ~CShader();
 
-	CPlayer								*m_pPlayer = NULL;
+	CPlayer* m_pPlayer = NULL;
 
 private:
 	int									m_nReferences = 0;
 
 protected:
 
-	ID3DBlob*							m_pd3dVertexShaderBlob = NULL;
-	ID3DBlob*							m_pd3dPixelShaderBlob = NULL;
+	ID3DBlob* m_pd3dVertexShaderBlob = NULL;
+	ID3DBlob* m_pd3dPixelShaderBlob = NULL;
 
 	int									m_nPipelineStates = 0;
-	ID3D12PipelineState**				m_ppd3dPipelineStates = NULL;
+	ID3D12PipelineState** m_ppd3dPipelineStates = NULL;
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC	m_d3dPipelineStateDesc;
 
-	ID3D12DescriptorHeap*				m_pd3dCbvSrvDescriptorHeap = NULL;
+	ID3D12DescriptorHeap* m_pd3dCbvSrvDescriptorHeap = NULL;
 
 	D3D12_CPU_DESCRIPTOR_HANDLE			m_d3dCbvCPUDescriptorStartHandle;
 	D3D12_GPU_DESCRIPTOR_HANDLE			m_d3dCbvGPUDescriptorStartHandle;
@@ -56,23 +56,23 @@ public:
 	virtual D3D12_SHADER_BYTECODE CreateDomainShader();
 	virtual D3D12_SHADER_BYTECODE CreateHullShader();
 
-	D3D12_SHADER_BYTECODE CompileShaderFromFile(WCHAR *pszFileName, LPCSTR pszShaderName, LPCSTR pszShaderProfile, ID3DBlob **ppd3dShaderBlob);
-	D3D12_SHADER_BYTECODE ReadCompiledShaderFromFile(WCHAR *pszFileName, ID3DBlob **ppd3dShaderBlob=NULL);
+	D3D12_SHADER_BYTECODE CompileShaderFromFile(WCHAR* pszFileName, LPCSTR pszShaderName, LPCSTR pszShaderProfile, ID3DBlob** ppd3dShaderBlob);
+	D3D12_SHADER_BYTECODE ReadCompiledShaderFromFile(WCHAR* pszFileName, ID3DBlob** ppd3dShaderBlob = NULL);
 
-	virtual void CreateShader(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList, ID3D12RootSignature *pd3dGraphicsRootSignature);
+	virtual void CreateShader(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature);
 
-	virtual void CreateShaderVariables(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList) { }
-	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList *pd3dCommandList) { }
+	virtual void CreateShaderVariables(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList) { }
+	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* pd3dCommandList) { }
 	virtual void ReleaseShaderVariables() { }
 
-	virtual void UpdateShaderVariable(ID3D12GraphicsCommandList *pd3dCommandList, XMFLOAT4X4 *pxmf4x4World) { }
+	virtual void UpdateShaderVariable(ID3D12GraphicsCommandList* pd3dCommandList, XMFLOAT4X4* pxmf4x4World) { }
 
-	virtual void OnPrepareRender(ID3D12GraphicsCommandList *pd3dCommandList, int nPipelineState=0);
-	virtual void Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera, int nPipelineState=0);
+	virtual void OnPrepareRender(ID3D12GraphicsCommandList* pd3dCommandList, int nPipelineState = 0);
+	virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera, int nPipelineState = 0);
 
 	virtual void ReleaseUploadBuffers() { }
 
-	virtual void BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList, ID3D12RootSignature *pd3dGraphicsRootSignature, void *pContext = NULL) { }
+	virtual void BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature, void* pContext = NULL) { }
 	virtual void AnimateObjects(float fTimeElapsed) { }
 	virtual void ReleaseObjects() { }
 	virtual XMFLOAT3 Intersect() { return XMFLOAT3(); }
@@ -80,8 +80,8 @@ public:
 	virtual XMFLOAT2 CaculObjectPlayerDistance(int objnum) { return XMFLOAT2(); }
 	virtual CGameObject** GetObjects() { return NULL; }
 
-	void CreateCbvSrvDescriptorHeaps(ID3D12Device *pd3dDevice, int nConstantBufferViews, int nShaderResourceViews);
-	void CreateConstantBufferViews(ID3D12Device *pd3dDevice, int nConstantBufferViews, ID3D12Resource *pd3dConstantBuffers, UINT nStride);
+	void CreateCbvSrvDescriptorHeaps(ID3D12Device* pd3dDevice, int nConstantBufferViews, int nShaderResourceViews);
+	void CreateConstantBufferViews(ID3D12Device* pd3dDevice, int nConstantBufferViews, ID3D12Resource* pd3dConstantBuffers, UINT nStride);
 	void CreateShaderResourceViews(ID3D12Device* pd3dDevice, CTexture* pTexture, UINT nDescriptorHeapIndex, UINT nRootParameterStartIndex);
 	void CreateShaderResourceView(ID3D12Device* pd3dDevice, CTexture* pTexture, int nIndex);
 
@@ -108,7 +108,7 @@ public:
 	virtual D3D12_SHADER_BYTECODE CreateVertexShader();
 	virtual D3D12_SHADER_BYTECODE CreatePixelShader();
 
-	virtual void CreateShader(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList, ID3D12RootSignature *pd3dGraphicsRootSignature);
+	virtual void CreateShader(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature);
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -124,7 +124,7 @@ public:
 	virtual D3D12_SHADER_BYTECODE CreateVertexShader();
 	virtual D3D12_SHADER_BYTECODE CreatePixelShader();
 
-	virtual void CreateShader(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList, ID3D12RootSignature *pd3dGraphicsRootSignature);
+	virtual void CreateShader(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature);
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -135,14 +135,14 @@ public:
 	CObjectsShader();
 	virtual ~CObjectsShader();
 
-	virtual void BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList, ID3D12RootSignature *pd3dGraphicsRootSignature, void *pContext = NULL);
+	virtual void BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature, void* pContext = NULL);
 	virtual void AnimateObjects(float fTimeElapsed);
 	virtual void ReleaseObjects();
 	virtual void BuildPlayerBullet(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature, void* pContext = NULL);
 
 	virtual void ReleaseUploadBuffers();
 
-	virtual void Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera, int nPipelineState=0);
+	virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera, int nPipelineState = 0);
 
 	void CheckObjectByPlayerCollisions();
 	void CheckPlayerByBulletCollisions();
@@ -153,25 +153,25 @@ public:
 
 protected:
 	float							m_fElapsedTime = 0.0f;
-	void							*m_pContext = NULL;
-	CGameObject						**m_ppObjects = 0;
+	void* m_pContext = NULL;
+	CGameObject** m_ppObjects = 0;
 	int								m_nObjects = 0;
 
 	int								m_nNowTargetRoute[MAX_ENEMY_COUNT] = { 0, };
-	XMFLOAT3						m_TargetVertex[2][ROUTE_INDEX_NUM] = { 
-																	{ XMFLOAT3(2185.0f, 750.0f, 310.0f),
-																	XMFLOAT3(1800.0f, 750.0f, 1140.0f),
-																	XMFLOAT3(2720.0f, 750.0f, 1680.0f),
-																	XMFLOAT3(1886.0f, 750.0f, 1230.0f),
-																	XMFLOAT3(816.0f, 750.0f, 480.0f),
-																	XMFLOAT3(172.0f, 750.0f, 870.0f) },
-																											
-																	{ XMFLOAT3(4385.0f, 750.0f, 1505.0f),
-																	XMFLOAT3(3525.0f, 750.0f, 1550.0f),
-																	XMFLOAT3(2720.0f, 750.0f, 1680.0f),
-																	XMFLOAT3(1886.0f, 750.0f, 1230.0f),
-																	XMFLOAT3(816.0f, 750.0f, 480.0f),
-																	XMFLOAT3(172.0f, 750.0f, 870.0f) } };
+	XMFLOAT3						m_TargetVertex[2][ROUTE_INDEX_NUM] = {
+																	{ XMFLOAT3(2185.0f, 550.0f, 310.0f),
+																	XMFLOAT3(1800.0f, 550.0f, 1140.0f),
+																	XMFLOAT3(2720.0f, 550.0f, 1680.0f),
+																	XMFLOAT3(1886.0f, 550.0f, 1230.0f),
+																	XMFLOAT3(816.0f, 550.0f, 480.0f),
+																	XMFLOAT3(172.0f, 550.0f, 870.0f) },
+
+																	{ XMFLOAT3(4385.0f, 550.0f, 1505.0f),
+																	XMFLOAT3(3525.0f, 550.0f, 1550.0f),
+																	XMFLOAT3(2720.0f, 550.0f, 1680.0f),
+																	XMFLOAT3(1886.0f, 550.0f, 1230.0f),
+																	XMFLOAT3(816.0f, 550.0f, 480.0f),
+																	XMFLOAT3(172.0f, 550.0f, 870.0f) } };
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -190,7 +190,7 @@ public:
 	virtual D3D12_SHADER_BYTECODE CreateVertexShader();
 	virtual D3D12_SHADER_BYTECODE CreatePixelShader();
 
-	virtual void CreateShader(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList, ID3D12RootSignature *pd3dGraphicsRootSignature);
+	virtual void CreateShader(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature);
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -271,7 +271,7 @@ public:
 	virtual D3D12_SHADER_BYTECODE CreatePixelShader();
 
 	virtual void CreateShader(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature);
-};   
+};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -280,6 +280,7 @@ class CViewportShader : public CShader
 {
 public:
 	CViewportShader(CObjectsShader* pObjectsShader, CHeightMapTerrain* pTerrain, CTerrainWater* pWater);
+	CViewportShader(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature);
 	virtual ~CViewportShader();
 
 	virtual D3D12_DEPTH_STENCIL_DESC CreateDepthStencilState();
@@ -297,17 +298,17 @@ public:
 	virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera, int nPipelineState = 0);
 
 protected:
-	CObjectsShader					*m_pObjectsShader = NULL;
-	CHeightMapTerrain				*m_pTerrain = NULL;
-	CTerrainWater					*m_pWater = NULL;
+	CObjectsShader* m_pObjectsShader = NULL;
+	CHeightMapTerrain* m_pTerrain = NULL;
+	CTerrainWater* m_pWater = NULL;
 
-	CTexture						*m_pDepthTexture = NULL;
+	CTexture* m_pDepthTexture = NULL;
 
-	ID3D12DescriptorHeap			*m_pd3dRtvDescriptorHeap = NULL;
+	ID3D12DescriptorHeap* m_pd3dRtvDescriptorHeap = NULL;
 	D3D12_CPU_DESCRIPTOR_HANDLE		m_pd3dRtvCPUDescriptorHandle;
 
-	ID3D12DescriptorHeap			*m_pd3dDsvDescriptorHeap = NULL;
-	ID3D12Resource					*m_pd3dDepthBuffer = NULL;
+	ID3D12DescriptorHeap* m_pd3dDsvDescriptorHeap = NULL;
+	ID3D12Resource* m_pd3dDepthBuffer = NULL;
 	D3D12_CPU_DESCRIPTOR_HANDLE		m_d3dDsvDescriptorCPUHandle;
 
 	XMMATRIX						m_xmProjectionToTexture;
@@ -334,13 +335,13 @@ public:
 	virtual D3D12_SHADER_BYTECODE CreatePixelShader();
 
 private:
-	CGameObject					** m_ppEffects = 0;
+	CGameObject** m_ppEffects = 0;
 	int							m_nEffects = 0;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-class CDynamicCubeMappingShader : public CObjectsShader
+class CDynamicCubeMappingShader : public CShader
 {
 public:
 	CDynamicCubeMappingShader(UINT nCubeMapSize = 256);
@@ -350,7 +351,14 @@ public:
 	virtual D3D12_SHADER_BYTECODE CreateVertexShader();
 	virtual D3D12_SHADER_BYTECODE CreatePixelShader();
 
+	virtual void CreateShader(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature);
 
+	virtual void CreateShaderVariables(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList);
+	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* pd3dCommandList);
+	virtual void ReleaseShaderVariables();
+
+	CGameObject** m_ppObjects = 0;
+	int								m_nObjects = 0;
 
 	virtual void BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, void* pContext = NULL);
 	virtual void ReleaseObjects();
@@ -368,6 +376,9 @@ protected:
 
 	ID3D12DescriptorHeap* m_pd3dRtvDescriptorHeap = NULL;
 	ID3D12DescriptorHeap* m_pd3dDsvDescriptorHeap = NULL;
+
+	ID3D12Resource* m_pd3dcbGameObjects = NULL;
+	CB_GAMEOBJECT_INFO* m_pcbMappedGameObjects = NULL;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -388,12 +399,12 @@ public:
 	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* pd3dCommandList);
 	virtual void ReleaseShaderVariables();
 
-	virtual void UpdateShaderVariable(ID3D12GraphicsCommandList* pd3dCommandList, CGameObject** pGameObject);
+	virtual void UpdateShaderVariable(ID3D12GraphicsCommandList* pd3dCommandList, CGameObject* pGameObject);
 
 	virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera, UINT nPipelineState = 0);
 
 protected:
-	ID3D12Resource** m_pd3dcbGameObject = NULL;
-	CB_GAMEOBJECT_INFO** m_pcbMappedGameObject = NULL;
+	ID3D12Resource* m_pd3dcbGameObject = NULL;
+	CB_GAMEOBJECT_INFO* m_pcbMappedGameObject = NULL;
 
 };

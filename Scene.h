@@ -40,68 +40,72 @@ struct LIGHTS
 class CScene
 {
 public:
-    CScene();
-    ~CScene();
+	CScene();
+	~CScene();
 
 	bool OnProcessingMouseMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
 	bool OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPARAM wParam, LPARAM lParam);
 
-	virtual void CreateShaderVariables(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList);
-	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList *pd3dCommandList);
+	virtual void CreateShaderVariables(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList);
+	virtual void UpdateShaderVariables(ID3D12GraphicsCommandList* pd3dCommandList);
 	virtual void ReleaseShaderVariables();
 
 	void BuildDefaultLightsAndMaterials();
-	void BuildObjects(ID3D12Device *pd3dDevice, ID3D12GraphicsCommandList *pd3dCommandList);
+	void BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList);
 	void ReleaseObjects();
 	void BuildPlayerBullet(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList);
 
-	ID3D12RootSignature *CreateGraphicsRootSignature(ID3D12Device *pd3dDevice);
-	ID3D12RootSignature *GetGraphicsRootSignature() { return(m_pd3dGraphicsRootSignature); }
+	ID3D12RootSignature* CreateGraphicsRootSignature(ID3D12Device* pd3dDevice);
+	ID3D12RootSignature* GetGraphicsRootSignature() { return(m_pd3dGraphicsRootSignature); }
 
-	bool ProcessInput(UCHAR *pKeysBuffer);
-    void AnimateObjects(float fTimeElapsed);
+	bool ProcessInput(UCHAR* pKeysBuffer);
+	void AnimateObjects(float fTimeElapsed);
 
 	void UpdateWater(float fCurrentTime);
 
 	void PrepareRender(ID3D12GraphicsCommandList* pd3dCommandList);
 	void OnPreRender(ID3D12Device* pd3dDevice, ID3D12CommandQueue* pd3dCommandQueue, ID3D12Fence* pd3dFence, HANDLE hFenceEvent);
-    void Render(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera=NULL);
-    void MinimapRender(ID3D12GraphicsCommandList *pd3dCommandList, CCamera *pCamera=NULL);
+	void Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera = NULL);
+	void MinimapRender(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera = NULL);
 
 	void ReleaseUploadBuffers();
 
 	XMFLOAT2 CalculObjectPlayerDistance(int objnum);
 
-	CPlayer								*m_pPlayer = NULL;
+	CPlayer* m_pPlayer = NULL;
 
 public:
-	ID3D12RootSignature					*m_pd3dGraphicsRootSignature = NULL;
+	ID3D12RootSignature* m_pd3dGraphicsRootSignature = NULL;
 
 	int									m_nGameObjects = 0;
-	CGameObject							**m_ppGameObjects = NULL;
+	CGameObject** m_ppGameObjects = NULL;
 
 	int									m_nShaders = 0;
-	CShader								**m_ppShaders = NULL;
+	CShader** m_ppShaders = NULL;
 
-	CSkyBox								*m_pSkyBox = NULL;
-	CHeightMapTerrain					*m_pTerrain = NULL;
-	CTerrainWater						*m_pWater = NULL;
+	CSkyBox* m_pSkyBox = NULL;
+	CHeightMapTerrain* m_pTerrain = NULL;
+	CTerrainWater* m_pWater = NULL;
 
-	CDynamicCubeMappingShader			**m_ppEnvironmentMappingShaders = NULL;
+	// EnvironmentMapping
+	CDynamicCubeMappingShader** m_ppEnvironmentMappingShaders = NULL;
 	int									m_nEnvironmentMappingShaders = 0;
 
-	LIGHT								*m_pLights = NULL;
+	// Lights
+	LIGHT* m_pLights = NULL;
 	int									m_nLights = 0;
 
 	XMFLOAT4							m_xmf4GlobalAmbient;
 
-	ID3D12Resource						*m_pd3dcbLights = NULL;
-	LIGHTS								*m_pcbMappedLights = NULL;
+	ID3D12Resource* m_pd3dcbLights = NULL;
+	LIGHTS* m_pcbMappedLights = NULL;
 
-	CViewportShader						*m_pMapToViewport = NULL;
+	// Minimap
+	CViewportShader* m_pMapToViewport = NULL;
 
-	CCamera								*m_pViewCamera = NULL;
+	CCamera* m_pViewCamera = NULL;
 
-	COutlineShader						*m_pOutlineShader = NULL;
+	// OutLine
+	COutlineShader* m_pOutlineShader = NULL;
 	bool								m_bIsOutline = false;
 };
