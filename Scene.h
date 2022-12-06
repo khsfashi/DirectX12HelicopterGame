@@ -68,6 +68,9 @@ public:
 	void Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera = NULL);
 	void MinimapRender(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera = NULL);
 
+	void RenderParticle(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera);
+	void OnPostRenderParticle();
+
 	void ReleaseUploadBuffers();
 
 	XMFLOAT2 CalculObjectPlayerDistance(int objnum);
@@ -108,4 +111,8 @@ public:
 	// OutLine
 	COutlineShader* m_pOutlineShader = NULL;
 	bool								m_bIsOutline = false;
+
+	// Particle
+	CParticleObject** m_ppParticleObjects = NULL;
+	int							m_nParticleObjects = 0;
 };

@@ -456,6 +456,8 @@ void CGameFramework::BuildObjects()
 	//m_pScene->BuildPlayerBullet(m_pd3dDevice, m_pd3dCommandList);
 	m_pCamera = m_pPlayer->GetCamera();
 
+	CreateShaderVariables();
+
 	m_pd3dCommandList->Close();
 	ID3D12CommandList* ppd3dCommandLists[] = { m_pd3dCommandList };
 	m_pd3dCommandQueue->ExecuteCommandLists(1, ppd3dCommandLists);
@@ -470,6 +472,8 @@ void CGameFramework::BuildObjects()
 
 void CGameFramework::ReleaseObjects()
 {
+	ReleaseShaderVariables();
+
 	if (m_pUILayer) m_pUILayer->ReleaseResources();
 	if (m_pUILayer) delete m_pUILayer;
 
@@ -479,25 +483,55 @@ void CGameFramework::ReleaseObjects()
 	if (m_pScene) delete m_pScene;
 }
 
+void CGameFramework::CreateShaderVariables()
+{
+	UINT ncbElementBytes = ((sizeof(CB_FRAMEWORK_INFO) + 255) & ~255); //256의 배수
+	m_pd3dcbFrameworkInfo = ::CreateBufferResource(m_pd3dDevice, m_pd3dCommandList, NULL, ncbElementBytes, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER | D3D12_RESOURCE_STATE_GENERIC_READ, NULL);
+
+	m_pd3dcbFrameworkInfo->Map(0, NULL, (void**)&m_pcbMappedFrameworkInfo);
+}
+
 void CGameFramework::UpdateShaderVariables()
 {
-	float fCurrentTime = m_GameTimer.GetTotalTime();
+	m_pcbMappedFrameworkInfo->m_fCurrentTime = m_GameTimer.GetTotalTime();
+	m_pcbMappedFrameworkInfo->m_fElapsedTime = m_GameTimer.GetTimeElapsed();
+	m_pcbMappedFrameworkInfo->m_fSecondsPerFirework = 0.4f;
+	m_pcbMappedFrameworkInfo->m_nFlareParticlesToEmit = 100;
+	m_pcbMappedFrameworkInfo->m_xmf3Gravity = XMFLOAT3(0.0f, -9.8f, 0.0f);
+	m_pcbMappedFrameworkInfo->m_nMaxFlareType2Particles = 15 * 1.5f;
+
+	D3D12_GPU_VIRTUAL_ADDRESS d3dGpuVirtualAddress = m_pd3dcbFrameworkInfo->GetGPUVirtualAddress();
+	m_pd3dCommandList->SetGraphicsRootConstantBufferView(13, d3dGpuVirtualAddress);
+
+
+	/*float fCurrentTime = m_GameTimer.GetTotalTime();
 	float fElapsedTime = m_GameTimer.GetTimeElapsed();
 
 	m_pd3dCommandList->SetGraphicsRoot32BitConstants(13, 1, &fCurrentTime, 0);
-	m_pd3dCommandList->SetGraphicsRoot32BitConstants(13, 1, &fElapsedTime, 1);
+	m_pd3dCommandList->SetGraphicsRoot32BitConstants(13, 1, &fElapsedTime, 1);*/
 
-	POINT ptCursorPos;
+
+
+	/*POINT ptCursorPos;
 	::GetCursorPos(&ptCursorPos);
 	::ScreenToClient(m_hWnd, &ptCursorPos);
 	float fxCursorPos = (ptCursorPos.x < 0) ? 0.0f : float(ptCursorPos.x);
 	float fyCursorPos = (ptCursorPos.y < 0) ? 0.0f : float(ptCursorPos.y);
 
 	m_pd3dCommandList->SetGraphicsRoot32BitConstants(13, 1, &fxCursorPos, 2);
-	m_pd3dCommandList->SetGraphicsRoot32BitConstants(13, 1, &fyCursorPos, 3);
+	m_pd3dCommandList->SetGraphicsRoot32BitConstants(13, 1, &fyCursorPos, 3);*/
 
 	//std::cout << "현재 시간 : " << fCurrentTime << ", 프레임당 시간 : " << fElapsedTime << ", 마우스 좌표 : (" << fxCursorPos << ", " << fyCursorPos << ") ";
 	//std::cout << "\r";
+}
+
+void CGameFramework::ReleaseShaderVariables()
+{
+	if (m_pd3dcbFrameworkInfo)
+	{
+		m_pd3dcbFrameworkInfo->Unmap(0, NULL);
+		m_pd3dcbFrameworkInfo->Release();
+	}
 }
 
 void CGameFramework::ProcessInput()
@@ -558,7 +592,8 @@ void CGameFramework::WaitForGpuComplete()
 	if (m_pd3dFence->GetCompletedValue() < nFenceValue)
 	{
 		hResult = m_pd3dFence->SetEventOnCompletion(nFenceValue, m_hFenceEvent);
-		::WaitForSingleObject(m_hFenceEvent, INFINITE);
+		//::WaitForSingleObject(m_hFenceEvent, INFINITE);
+		::WaitForSingleObject(m_hFenceEvent, 1000);
 	}
 }
 
@@ -573,7 +608,8 @@ void CGameFramework::MoveToNextFrame()
 	if (m_pd3dFence->GetCompletedValue() < nFenceValue)
 	{
 		hResult = m_pd3dFence->SetEventOnCompletion(nFenceValue, m_hFenceEvent);
-		::WaitForSingleObject(m_hFenceEvent, INFINITE);
+		//::WaitForSingleObject(m_hFenceEvent, INFINITE);
+		::WaitForSingleObject(m_hFenceEvent, 1000);
 	}
 }
 
@@ -612,7 +648,7 @@ void CGameFramework::FrameAdvance()
 
 	UpdateUI();
 
-	m_pScene->OnPreRender(m_pd3dDevice, m_pd3dCommandQueue, m_pd3dFence, m_hFenceEvent);
+	//m_pScene->OnPreRender(m_pd3dDevice, m_pd3dCommandQueue, m_pd3dFence, m_hFenceEvent);
 
 	HRESULT hResult = m_pd3dCommandAllocator->Reset();
 	hResult = m_pd3dCommandList->Reset(m_pd3dCommandAllocator, NULL);
@@ -652,12 +688,19 @@ void CGameFramework::FrameAdvance()
 	m_pd3dCommandList->ClearDepthStencilView(d3dDsvCPUDescriptorHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, NULL);
 	m_pScene->MinimapRender(m_pd3dCommandList, m_pCamera);
 
-	hResult = m_pd3dCommandList->Close();
+	m_pScene->RenderParticle(m_pd3dCommandList, m_pCamera);
+
+	::SynchronizeResourceTransition(m_pd3dCommandList, m_ppd3dSwapChainBackBuffers[m_nSwapChainBufferIndex], D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+	::ExecuteCommandList(m_pd3dCommandList, m_pd3dCommandQueue, m_pd3dFence, ++m_nFenceValues[m_nSwapChainBufferIndex], m_hFenceEvent);
+	/*hResult = m_pd3dCommandList->Close();
 
 	ID3D12CommandList* ppd3dCommandLists[] = { m_pd3dCommandList };
-	m_pd3dCommandQueue->ExecuteCommandLists(1, ppd3dCommandLists);
+	m_pd3dCommandQueue->ExecuteCommandLists(1, ppd3dCommandLists);*/
 
 	WaitForGpuComplete();
+
+	m_pScene->OnPostRenderParticle();
+
 	m_pUILayer->Render(m_nSwapChainBufferIndex);
 
 #ifdef _WITH_PRESENT_PARAMETERS
