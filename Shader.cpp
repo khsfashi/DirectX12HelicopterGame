@@ -1718,13 +1718,60 @@ void CDynamicCubeMappingShader::OnPreRender(ID3D12Device* pd3dDevice, ID3D12Comm
 	}
 }
 
+void CDynamicCubeMappingShader::CheckCubeByPlayerCollisions()
+{
+	for (int i = 0; i < m_nObjects; ++i)
+	{
+		//cout << m_ppGameObjects[i]->GetLook().x << "==========" << m_ppGameObjects[i]->GetLook().y << "==========" << m_ppGameObjects[i]->GetLook().z << endl;
+		float fDistance = m_ppObjects[i]->CalculateDistance(m_pPlayer->GetPosition());
+		if (m_ppObjects[i]->IsSpawn() && fDistance <= (m_ppObjects[i]->GetRadius() + m_pPlayer->GetRadius())) {
+			std::cout << "Ãæµ¹===================================================" << std::endl;
+			XMFLOAT3 xmf3PlayerPos = m_pPlayer->GetPosition();
+			XMFLOAT3 xmf3ObjPos = m_ppObjects[i]->GetPosition();
+
+			XMFLOAT3 xmf3Impulse = XMFLOAT3(xmf3PlayerPos.x - xmf3ObjPos.x, xmf3PlayerPos.y - xmf3ObjPos.y, xmf3PlayerPos.z - xmf3ObjPos.z);
+			xmf3Impulse.x *= 10.0f;
+			xmf3Impulse.y *= 10.0f;
+			xmf3Impulse.z *= 10.0f;
+			m_pPlayer->SetVelocity(xmf3Impulse);
+			m_pPlayer->Damaged();
+		}
+	}
+}
+
+void CDynamicCubeMappingShader::CheckCubeByBulletCollisions()
+{
+	for (int i = 0; i < m_nObjects; ++i)
+	{
+		if (m_ppObjects[i]->IsSpawn() && m_pPlayer->CheckCollisionToObject(m_ppObjects[i]->GetPosition(), m_ppObjects[i]->GetRadius()))
+		{
+			m_ppObjects[i]->Damaged();
+			if (m_ppObjects[i]->GetHP() <= 0) {
+				m_pPlayer->Heal(2);
+				m_ppObjects[i]->Destroy();
+			}
+		}
+	}
+}
+
+bool CDynamicCubeMappingShader::GetGameClear()
+{
+	for (int i = 0; i < m_nObjects; ++i)
+	{
+		if (m_ppObjects[i]->IsSpawn()) return false;
+	}
+	return true;
+}
+
 void CDynamicCubeMappingShader::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera)
 {
 	CShader::Render(pd3dCommandList, pCamera);
 
+	CheckCubeByPlayerCollisions();
+	CheckCubeByBulletCollisions();
 	for (int j = 0; j < m_nObjects; j++)
 	{
-		if (m_ppObjects[j]) {
+		if (m_ppObjects[j]->IsSpawn()) {
 			m_ppObjects[j]->UpdateTransform(NULL);
 			m_ppObjects[j]->Render(pd3dCommandList, pCamera);
 		}

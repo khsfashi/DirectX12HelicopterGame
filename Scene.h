@@ -74,6 +74,7 @@ public:
 	void ReleaseUploadBuffers();
 
 	XMFLOAT2 CalculObjectPlayerDistance(int objnum);
+	bool GameClear() { return m_ppEnvironmentMappingShaders[0]->GetGameClear(); }
 
 	CPlayer* m_pPlayer = NULL;
 

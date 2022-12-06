@@ -325,6 +325,9 @@ void CGameFramework::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPA
 		case VK_F3:
 			m_pCamera = m_pPlayer->ChangeCamera((DWORD)(wParam - VK_F1 + 1), m_GameTimer.GetTimeElapsed());
 			break;
+		case VK_F4:
+			if(m_pScene)m_pScene->m_bIsOutline = !m_pScene->m_bIsOutline;
+			break;
 		case VK_F9:
 			ChangeSwapChainState();
 			break;
@@ -448,11 +451,12 @@ void CGameFramework::BuildObjects()
 	if (m_pScene) m_pScene->BuildObjects(m_pd3dDevice, m_pd3dCommandList);
 
 	CAirplanePlayer* pAirplanePlayer = new CAirplanePlayer(m_pd3dDevice, m_pd3dCommandList, m_pScene->GetGraphicsRootSignature());
-	pAirplanePlayer->SetPosition(XMFLOAT3(920.0f, 745.0f, 1270.0));
+	pAirplanePlayer->SetPosition(XMFLOAT3(2500.0f, 550.0f, 3900.0f));
 	pAirplanePlayer->SetRadius(8.5f);
 	pAirplanePlayer->SetPlayerUpdatedContext(m_pScene->m_pTerrain);
 	m_pScene->m_pPlayer = m_pPlayer = pAirplanePlayer;
 	m_pScene->m_ppShaders[0]->m_pPlayer = m_pPlayer = pAirplanePlayer;
+	m_pScene->m_ppEnvironmentMappingShaders[0]->m_pPlayer = m_pPlayer = pAirplanePlayer;
 	//m_pScene->BuildPlayerBullet(m_pd3dDevice, m_pd3dCommandList);
 	m_pCamera = m_pPlayer->GetCamera();
 
@@ -648,7 +652,7 @@ void CGameFramework::FrameAdvance()
 
 	UpdateUI();
 
-	//m_pScene->OnPreRender(m_pd3dDevice, m_pd3dCommandQueue, m_pd3dFence, m_hFenceEvent);
+	if(!m_pScene->GameClear()) m_pScene->OnPreRender(m_pd3dDevice, m_pd3dCommandQueue, m_pd3dFence, m_hFenceEvent);
 
 	HRESULT hResult = m_pd3dCommandAllocator->Reset();
 	hResult = m_pd3dCommandList->Reset(m_pd3dCommandAllocator, NULL);
@@ -688,7 +692,7 @@ void CGameFramework::FrameAdvance()
 	m_pd3dCommandList->ClearDepthStencilView(d3dDsvCPUDescriptorHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, NULL);
 	m_pScene->MinimapRender(m_pd3dCommandList, m_pCamera);
 
-	m_pScene->RenderParticle(m_pd3dCommandList, m_pCamera);
+	if (m_pScene->GameClear()) m_pScene->RenderParticle(m_pd3dCommandList, m_pCamera);
 
 	::SynchronizeResourceTransition(m_pd3dCommandList, m_ppd3dSwapChainBackBuffers[m_nSwapChainBufferIndex], D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 	::ExecuteCommandList(m_pd3dCommandList, m_pd3dCommandQueue, m_pd3dFence, ++m_nFenceValues[m_nSwapChainBufferIndex], m_hFenceEvent);
@@ -699,7 +703,7 @@ void CGameFramework::FrameAdvance()
 
 	WaitForGpuComplete();
 
-	m_pScene->OnPostRenderParticle();
+	if (m_pScene->GameClear()) m_pScene->OnPostRenderParticle();
 
 	m_pUILayer->Render(m_nSwapChainBufferIndex);
 

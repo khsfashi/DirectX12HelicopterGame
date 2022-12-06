@@ -375,6 +375,10 @@ public:
 	virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera);
 	virtual void OnPreRender(ID3D12Device* pd3dDevice, ID3D12CommandQueue* pd3dCommandQueue, ID3D12Fence* pd3dFence, HANDLE hFenceEvent, CScene* pScene);
 
+	void CheckCubeByPlayerCollisions();
+	void CheckCubeByBulletCollisions();
+	bool GetGameClear();
+
 protected:
 	ULONG							m_nCubeMapSize = 256;
 

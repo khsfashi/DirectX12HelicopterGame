@@ -296,9 +296,12 @@ public:
 
 	virtual void Attack() {}
 	virtual void Destroy() {}
+	virtual void Damaged() {}
 	virtual void Reset() {}
 	virtual void BulletReset() {}
 	virtual void SetBullet(CGameObject* input) {}
+
+	virtual int GetHP() { return 0; }
 
 public:
 	void LoadMaterialsFromFile(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, CGameObject* pParent, FILE* pInFile, CShader* pShader);
@@ -462,6 +465,10 @@ public:
 	virtual void OnPreRender(ID3D12GraphicsCommandList* pd3dCommandList, CScene* pScene);
 	//virtual void Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera = NULL);
 
+	virtual float CalculateDistance(XMFLOAT3 xmf3OtherPos);
+	virtual int GetHP() { return m_HP; }
+	virtual void Damaged() { if (m_HP > 0)m_HP--; }
+	virtual void Destroy() { m_fSpawnDelay = 900000.0f; }
 
 	CCamera* m_ppCameras[6];
 
@@ -469,6 +476,8 @@ public:
 
 	ID3D12Resource* m_pd3dDepthStencilBuffer = NULL;
 	D3D12_CPU_DESCRIPTOR_HANDLE		m_d3dDsvCPUDescriptorHandle;
+
+	int m_HP = 2;
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

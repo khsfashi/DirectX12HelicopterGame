@@ -1377,6 +1377,7 @@ void CBulletObject::Reset()
 // 
 CDynamicCubeMappingObject::CDynamicCubeMappingObject(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, LONG nCubeMapSize, D3D12_CPU_DESCRIPTOR_HANDLE d3dDsvCPUDescriptorHandle, D3D12_CPU_DESCRIPTOR_HANDLE d3dRtvCPUDescriptorHandle, CShader* pShader) : CGameObject(1, 1)
 {
+	SetRadius(0.0f);
 	//Camera[6]
 	for (int j = 0; j < 6; j++)
 	{
@@ -1473,6 +1474,13 @@ void CDynamicCubeMappingObject::OnPreRender(ID3D12GraphicsCommandList* pd3dComma
 	}
 
 	::SynchronizeResourceTransition(pd3dCommandList, m_ppMaterials[0]->m_pTexture->GetResource(0), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_GENERIC_READ);
+}
+
+float CDynamicCubeMappingObject::CalculateDistance(XMFLOAT3 xmf3OtherPos)
+{
+	XMFLOAT3 xmf3Distance = Vector3::Subtract(xmf3OtherPos, GetPosition());
+	float fDistance = sqrtf((xmf3Distance.x * xmf3Distance.x) + (xmf3Distance.y * xmf3Distance.y) + (xmf3Distance.z * xmf3Distance.z));
+	return fDistance;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
