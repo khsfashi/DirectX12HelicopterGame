@@ -560,6 +560,13 @@ void CScene::AnimateObjects(float fTimeElapsed)
 
 	for (int i = 0; i < m_nShaders; i++) if (m_ppShaders[i]) m_ppShaders[i]->AnimateObjects(fTimeElapsed);
 
+	for (int i = 0; i < m_nEnvironmentMappingShaders; ++i)
+	{
+		for(int j = 0; j < 2; ++j)
+			if(m_ppShaders[0]) m_ppShaders[0]->m_nLiveCube[j] = m_ppEnvironmentMappingShaders[i]->m_nLiveCube[j];
+	}
+		
+
 	if (m_pLights)
 	{
 		m_pLights[1].m_xmf3Position = m_pPlayer->GetPosition();

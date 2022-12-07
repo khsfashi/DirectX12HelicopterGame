@@ -160,7 +160,10 @@ public:
 
 	float							m_fGlossiness = 0.0f;
 	float							m_fSmoothness = 0.0f;
-	float							m_fSpecularHighlight = 0.0f;
+	float							m_fSpecularHigh
+		
+		
+		= 0.0f;
 	float							m_fMetallic = 0.0f;
 	float							m_fGlossyReflection = 0.0f;
 };

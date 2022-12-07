@@ -15,6 +15,7 @@ public:
 	virtual ~CShader();
 
 	CPlayer* m_pPlayer = NULL;
+	bool m_nLiveCube[2] = { true, true };
 
 private:
 	int									m_nReferences = 0;

@@ -356,7 +356,8 @@ void CGameFramework::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPA
 			break;
 
 		case VK_CONTROL:
-			m_pPlayer->Fired();
+			if(m_pScene)
+				if(!m_pScene->GameClear())m_pPlayer->Fired();
 			break;
 		}
 	default:
@@ -452,6 +453,7 @@ void CGameFramework::BuildObjects()
 
 	CAirplanePlayer* pAirplanePlayer = new CAirplanePlayer(m_pd3dDevice, m_pd3dCommandList, m_pScene->GetGraphicsRootSignature());
 	pAirplanePlayer->SetPosition(XMFLOAT3(2500.0f, 550.0f, 3900.0f));
+	pAirplanePlayer->Rotate(0.0f,180.0f,0.0f);
 	pAirplanePlayer->SetRadius(8.5f);
 	pAirplanePlayer->SetPlayerUpdatedContext(m_pScene->m_pTerrain);
 	m_pScene->m_pPlayer = m_pPlayer = pAirplanePlayer;

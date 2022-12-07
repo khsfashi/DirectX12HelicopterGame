@@ -452,6 +452,19 @@ float4 PSTerrainWater(VS_WATER_OUTPUT input) : SV_TARGET
 #endif
 #endif
 
+	cColor = Lighting(cColor, cDetail1TexColor);
+
+	float3 vCameraPos = gvCameraPosition.xyz;
+	float3 vPosToCamera = vCameraPos - input.position;
+	float fDistToCamera = length(vPosToCamera);
+	float start = length(vCameraPos);
+	float fFogFactor = 0.0f;
+	float fFogRange = 2000.0f;
+	fFogFactor = saturate((start - fDistToCamera) / 1000.0f);
+
+	float4 FogColor = float4(0.0f, 0.5f, 1.0f, 1.0f);
+
+	cColor = lerp(cColor, FogColor, 0.5f + fFogFactor);
 	cColor = Fog(cColor, input.position);
 
 	cColor.a = 0.5;
@@ -571,6 +584,7 @@ float4 PSCubeMapping(VS_LIGHTING_OUTPUT input) : SV_Target
 	float4 cCubeTextureColor = gtxtCubeMap.Sample(gssWrap, vReflected);
 
 	cCubeTextureColor = Fog(cCubeTextureColor, input.position);
+	cCubeTextureColor.x += 0.3f;
 	//	return(float4(vReflected * 0.5f + 0.5f, 1.0f));
 		return(cCubeTextureColor);
 		//	return(cIllumination * cCubeTextureColor);

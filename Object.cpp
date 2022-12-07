@@ -784,7 +784,10 @@ void CGameObject::LoadMaterialsFromFile(ID3D12Device* pd3dDevice, ID3D12Graphics
 		}
 		else if (!strcmp(pstrToken, "<Metallic>:"))
 		{
-			nReads = (UINT)::fread(&(pMaterial->m_fSpecularHighlight), sizeof(float), 1, pInFile);
+			nReads = (UINT)::fread(&(pMaterial->m_fSpecularHigh
+				
+				
+				), sizeof(float), 1, pInFile);
 		}
 		else if (!strcmp(pstrToken, "<SpecularHighlight>:"))
 		{
@@ -1247,7 +1250,8 @@ CTerrainWater::CTerrainWater(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList
 
 	pWaterTexture->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Image/Water_Base_Texture_0.dds", RESOURCE_TEXTURE2D, 0);
 	pWaterTexture->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Image/Water_Detail_Texture_0.dds", RESOURCE_TEXTURE2D, 1);
-	pWaterTexture->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Image/Water_Texture_Alpha.dds", RESOURCE_TEXTURE2D, 2);
+	//pWaterTexture->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Image/Water_Texture_Alpha.dds", RESOURCE_TEXTURE2D, 2);
+	pWaterTexture->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Image/Water_Detail_Texture_0_Normal.dds", RESOURCE_TEXTURE2D, 2);
 
 	CTerrainWaterShader* pWaterShader = new CTerrainWaterShader(m_Depth);
 	pWaterShader->CreateShader(pd3dDevice, pd3dCommandList, pd3dGraphicsRootSignature);
@@ -1317,6 +1321,9 @@ void CBulletObject::Animate(float fTimeElapsed, XMFLOAT4X4* pxmf4x4Parent)
 {
 	if (m_bIsShot)
 	{
+		XMMATRIX xmmtxRotate = XMMatrixRotationZ(XMConvertToRadians(360.0f * 4.0f) * fTimeElapsed);
+		m_xmf4x4Transform = Matrix4x4::Multiply(xmmtxRotate, m_xmf4x4Transform);
+
 		float fLength = sqrtf(m_xmf3Velocity.x * m_xmf3Velocity.x + m_xmf3Velocity.z * m_xmf3Velocity.z);
 		float fMaxVelocityXZ = m_fMaxVelocity;
 		if (fLength > m_fMaxVelocity)

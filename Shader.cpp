@@ -1749,6 +1749,7 @@ void CDynamicCubeMappingShader::CheckCubeByBulletCollisions()
 			if (m_ppObjects[i]->GetHP() <= 0) {
 				m_pPlayer->Heal(2);
 				m_ppObjects[i]->Destroy();
+				m_nLiveCube[i] = false;
 			}
 		}
 	}
@@ -1771,7 +1772,7 @@ void CDynamicCubeMappingShader::Render(ID3D12GraphicsCommandList* pd3dCommandLis
 	CheckCubeByBulletCollisions();
 	for (int j = 0; j < m_nObjects; j++)
 	{
-		if (m_ppObjects[j]->IsSpawn()) {
+		if (m_ppObjects[j]->IsSpawn() && m_nLiveCube[j%2]) {
 			m_ppObjects[j]->UpdateTransform(NULL);
 			m_ppObjects[j]->Render(pd3dCommandList, pCamera);
 		}
