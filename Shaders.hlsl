@@ -416,7 +416,10 @@ VS_WATER_OUTPUT VSTerrainWater(VS_WATER_INPUT input)
 {
 	VS_WATER_OUTPUT output;
 
+	//input.position.y += sin(gfCurrentTime * 0.5f + input.position.x * 0.01f) * 45.0f + cos(gfCurrentTime * 1.0f + input.position.z * 0.01f) * 35.0f;
+
 	output.position = mul(mul(mul(float4(input.position, 1.0f), gmtxGameObject), gmtxView), gmtxProjection);
+	//output.color = (input.position.y / 200.0f) + 0.55f;
 	output.uv = input.uv;
 
 	return(output);
@@ -470,6 +473,81 @@ float4 PSTerrainWater(VS_WATER_OUTPUT input) : SV_TARGET
 	cColor.a = 0.5;
 
 	return(cColor);
+}
+
+
+struct VS_RippleWATER_INPUT
+{
+	float3 position : POSITION;
+	float4 color : COLOR;
+	float2 uv0 : TEXCOORD0;
+	//	float2 uv1 : TEXCOORD1;
+};
+
+struct VS_RippleWATER_OUTPUT
+{
+	float4 position : SV_POSITION;
+	float4 color : COLOR;
+	float2 uv0 : TEXCOORD0;
+	//	float2 uv1 : TEXCOORD1;
+};
+
+VS_RippleWATER_OUTPUT VSRippleWater(VS_RippleWATER_INPUT input)
+{
+	VS_RippleWATER_OUTPUT output;
+
+	//	input.position.y += sin(gfCurrentTime * 0.5f + input.position.x * 0.01f + input.position.z * 0.01f) * 35.0f;
+	//	input.position.y += sin(input.position.x * 0.01f) * 45.0f + cos(input.position.z * 0.01f) * 35.0f;
+	//	input.position.y += sin(gfCurrentTime * 0.5f + input.position.x * 0.01f) * 45.0f + cos(gfCurrentTime * 1.0f + input.position.z * 0.01f) * 35.0f;
+	//	input.position.y += sin(gfCurrentTime * 0.5f + ((input.position.x * input.position.x) + (input.position.z * input.position.z)) * 0.01f) * 35.0f;
+	//	input.position.y += sin(gfCurrentTime * 1.0f + (((input.position.x * input.position.x) + (input.position.z * input.position.z)) - (1000 * 1000) * 2) * 0.0001f) * 10.0f;
+
+	//	input.position.y += sin(gfCurrentTime * 1.0f + (((input.position.x * input.position.x) + (input.position.z * input.position.z))) * 0.0001f) * 10.0f;
+	input.position.y += sin(gfCurrentTime * 0.5f + input.position.x * 0.01f) * 45.0f + cos(gfCurrentTime * 1.0f + input.position.z * 0.01f) * 35.0f;
+	output.position = mul(mul(mul(float4(input.position, 1.0f), gmtxGameObject), gmtxView), gmtxProjection);
+	//	output.color = input.color;
+	output.color = (input.position.y / 200.0f) + 0.55f;
+	output.uv0 = input.uv0;
+	//	output.uv1 = input.uv1;
+
+	return(output);
+}
+
+float4 PSRippleWater(VS_RippleWATER_OUTPUT input) : SV_TARGET
+{
+			float2 uv = input.uv0;
+			float4 cDetail0TexColor = gtxtWaterDetail0Texture.SampleLevel(gssWrap, uv * 20.0f, 0);
+			float4 cDetail1TexColor = gtxtWaterDetail1Texture.SampleLevel(gssWrap, uv * 20.0f, 0);
+
+			sf3x3TextureAnimation._m21 = gfCurrentTime * 0.00325f;
+			uv = mul(float3(input.uv0, 1.0f), sf3x3TextureAnimation).xy;
+			uv.y += gfCurrentTime * 0.00125f;
+
+	//	float4 cBaseTexColor = gtxtWaterBaseTexture.Sample(gSamplerState, input.uv0);
+		float4 cBaseTexColor = gtxtWaterBaseTexture.Sample(gssWrap, float2(input.uv0.x, input.uv0.y - abs(sin(gfCurrentTime)) * 0.0151f));
+		//	float4 cColor = input.color * 0.3f + cBaseTexColor * 0.7f;
+			float4 cDetailTexColor = gtxtWaterDetail0Texture.Sample(gssWrap, input.uv0 * 10.0f);
+			//float4 cColor = (cBaseTexColor * 0.3f + cDetailTexColor * 0.7f) + float4(0.0f, 0.0f, 0.15f, 0.0f);
+			float4 cColor = cBaseTexColor * cDetail0TexColor;
+			cColor *= input.color;
+
+			cColor = Lighting(cColor, cDetail1TexColor);
+
+			float3 vCameraPos = gvCameraPosition.xyz;
+			float3 vPosToCamera = vCameraPos - input.position;
+			float fDistToCamera = length(vPosToCamera);
+			float start = length(vCameraPos);
+			float fFogFactor = 0.0f;
+			float fFogRange = 2000.0f;
+			fFogFactor = saturate((start - fDistToCamera) / 1000.0f);
+
+			float4 FogColor = float4(0.0f, 0.5f, 1.0f, 1.0f);
+
+			cColor = lerp(cColor, FogColor, 0.5f + fFogFactor);
+			cColor = Fog(cColor, input.position);
+
+			cColor.a = 0.5f;
+			return(cColor);
 }
 
 

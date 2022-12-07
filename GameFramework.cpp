@@ -328,10 +328,11 @@ void CGameFramework::OnProcessingKeyboardMessage(HWND hWnd, UINT nMessageID, WPA
 		case VK_F4:
 			if(m_pScene)m_pScene->m_bIsOutline = !m_pScene->m_bIsOutline;
 			break;
+		case VK_F5:
+			if (m_pScene)m_pScene->m_bWave = !m_pScene->m_bWave;
+			break;
 		case VK_F9:
 			ChangeSwapChainState();
-			break;
-		case VK_F5:
 			break;
 		default:
 			break;

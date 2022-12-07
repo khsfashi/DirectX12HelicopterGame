@@ -89,7 +89,11 @@ public:
 
 	CSkyBox* m_pSkyBox = NULL;
 	CHeightMapTerrain* m_pTerrain = NULL;
+	
+	// water
 	CTerrainWater* m_pWater = NULL;
+	CRippleWater* m_pRippleWater = NULL;
+	bool								m_bWave = false;
 
 	// EnvironmentMapping
 	CDynamicCubeMappingShader** m_ppEnvironmentMappingShaders = NULL;

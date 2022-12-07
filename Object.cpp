@@ -1303,6 +1303,97 @@ void CTerrainWater::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* 
 	CGameObject::Render(pd3dCommandList, pCamera);
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+CRippleWater::CRippleWater(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList, ID3D12RootSignature* pd3dGraphicsRootSignature, int nWidth, int nLength, int nBlockWidth, int nBlockLength, XMFLOAT3 xmf3Scale, XMFLOAT4 xmf4Color) : CGameObject(1, 1)
+{
+	m_nWidth = nWidth;
+	m_nLength = nLength;
+
+	int cxQuadsPerBlock = nBlockWidth - 1;
+	int czQuadsPerBlock = nBlockLength - 1;
+
+	m_xmf3Scale = xmf3Scale;
+
+	long cxBlocks = (m_nWidth - 1) / cxQuadsPerBlock;
+	long czBlocks = (m_nLength - 1) / czQuadsPerBlock;
+
+	m_nMeshes = cxBlocks * czBlocks;
+	m_ppMeshes = new CMesh * [m_nMeshes];
+	for (int i = 0; i < m_nMeshes; i++)	m_ppMeshes[i] = NULL;
+
+	CGridMesh* pGridMesh = NULL;
+	for (int z = 0, zStart = 0; z < czBlocks; z++)
+	{
+		for (int x = 0, xStart = 0; x < cxBlocks; x++)
+		{
+			xStart = x * (nBlockWidth - 1);
+			zStart = z * (nBlockLength - 1);
+			pGridMesh = new CGridMesh(pd3dDevice, pd3dCommandList, xStart, zStart, nBlockWidth, nBlockLength, xmf3Scale, xmf4Color);
+			SetMesh(x + (z * cxBlocks), pGridMesh);
+		}
+	}
+
+	CreateShaderVariables(pd3dDevice, pd3dCommandList);
+
+	CTexture* pWaterTexture = new CTexture(3, RESOURCE_TEXTURE2D, 0, 1);
+
+	pWaterTexture->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Image/Water_Base_Texture_0.dds", RESOURCE_TEXTURE2D, 0);
+	pWaterTexture->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Image/Water_Detail_Texture_0.dds", RESOURCE_TEXTURE2D, 1);
+	//pWaterTexture->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Image/Water_Texture_Alpha.dds", RESOURCE_TEXTURE2D, 2);
+	pWaterTexture->LoadTextureFromDDSFile(pd3dDevice, pd3dCommandList, L"Image/Water_Detail_Texture_0_Normal.dds", RESOURCE_TEXTURE2D, 2);
+
+	UINT ncbElementBytes = ((sizeof(CB_GAMEOBJECT_INFO) + 255) & ~255); //256의 배수
+
+	CRippleWaterShader* pRippleWaterShader = new CRippleWaterShader();
+	pRippleWaterShader->CreateShader(pd3dDevice, pd3dCommandList,pd3dGraphicsRootSignature);
+	pRippleWaterShader->CreateShaderVariables(pd3dDevice, pd3dCommandList);
+	pRippleWaterShader->CreateCbvSrvDescriptorHeaps(pd3dDevice, 1, 3);
+	pRippleWaterShader->CreateConstantBufferViews(pd3dDevice, 1, m_pd3dcbGameObject, ncbElementBytes);
+	pRippleWaterShader->CreateShaderResourceViews(pd3dDevice, pWaterTexture, 0, 14);
+
+	CMaterial* pWaterMaterial = new CMaterial();
+	pWaterMaterial->SetTexture(pWaterTexture);
+	pWaterMaterial->SetShader(pRippleWaterShader);
+
+	SetMaterial(0, pWaterMaterial);
+
+	//SetCbvGPUDescriptorHandle(pRippleWaterShader->GetGPUCbvDescriptorStartHandle());
+
+	//SetShader(pRippleWaterShader);
+}
+
+CRippleWater::~CRippleWater()
+{
+}
+
+void CRippleWater::CreateShaderVariables(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* pd3dCommandList)
+{
+	UINT ncbElementBytes = ((sizeof(CB_GAMEOBJECT_INFO) + 255) & ~255); //256의 배수
+	m_pd3dcbGameObject = ::CreateBufferResource(pd3dDevice, pd3dCommandList, NULL, ncbElementBytes, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, NULL);
+
+	m_pd3dcbGameObject->Map(0, NULL, (void**)&m_pcbMappedGameObject);
+}
+
+void CRippleWater::UpdateShaderVariables(ID3D12GraphicsCommandList* pd3dCommandList)
+{
+	if (m_pcbMappedGameObject) XMStoreFloat4x4(&m_pcbMappedGameObject->m_xmf4x4World, XMMatrixTranspose(XMLoadFloat4x4(&m_xmf4x4World)));
+
+}
+
+void CRippleWater::ReleaseShaderVariables()
+{
+	if (m_pd3dcbGameObject)
+	{
+		m_pd3dcbGameObject->Unmap(0, NULL);
+		m_pd3dcbGameObject->Release();
+	}
+	if (m_ppMaterials[0]) m_ppMaterials[0]->ReleaseShaderVariables();
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+
 CBulletObject::CBulletObject()
 {
 	m_xmf3Velocity = XMFLOAT3(0.0f, 0.0f, 0.0f);
@@ -1476,6 +1567,7 @@ void CDynamicCubeMappingObject::OnPreRender(ID3D12GraphicsCommandList* pd3dComma
 		pScene->m_pSkyBox->Render(pd3dCommandList, m_ppCameras[j]);
 		pScene->m_pTerrain->Render(pd3dCommandList, m_ppCameras[j]);
 		pScene->m_pWater->Render(pd3dCommandList, m_ppCameras[j]);
+		//pScene->m_pRippleWater->Render(pd3dCommandList, m_ppCameras[j]);
 		for (int i = 0; i < pScene->m_nShaders; i++) pScene->m_ppShaders[i]->Render(pd3dCommandList, m_ppCameras[j]);
 		//pScene->MinimapRender(pd3dCommandList, m_ppCameras[j]);
 	}

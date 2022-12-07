@@ -79,6 +79,11 @@ void CScene::BuildObjects(ID3D12Device* pd3dDevice, ID3D12GraphicsCommandList* p
 	m_pWater = new CTerrainWater(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, fWidth, fLength);
 	m_pWater->SetPosition(+(257 * xmf3Scale.x * 0.5f), 500.0f, +(257 * xmf3Scale.z * 0.5f));
 
+	XMFLOAT3 xmf3WaterScale(1.0f, 1.0f, 1.0f);
+	XMFLOAT4 xmf4WaterColor(0.0f, 0.0f, 0.7f, 1.0f);
+	m_pRippleWater = new CRippleWater(pd3dDevice, pd3dCommandList, m_pd3dGraphicsRootSignature, 2570 * 2, 2570 * 2, 2570 * 2, 2570 * 2, xmf3WaterScale, xmf4WaterColor);
+	m_pRippleWater->SetPosition(m_pRippleWater->GetPosition().x, 400.0f, m_pRippleWater->GetPosition().z);
+
 	m_nEnvironmentMappingShaders = 1;
 	m_ppEnvironmentMappingShaders = new CDynamicCubeMappingShader * [m_nEnvironmentMappingShaders];
 
@@ -167,6 +172,7 @@ void CScene::ReleaseObjects()
 	if (m_pTerrain) delete m_pTerrain;
 	if (m_pSkyBox) delete m_pSkyBox;
 	if (m_pWater) delete m_pWater;
+	if (m_pRippleWater) delete m_pRippleWater;
 
 	if (m_ppGameObjects)
 	{
@@ -507,6 +513,7 @@ void CScene::ReleaseUploadBuffers()
 	if (m_pTerrain) m_pTerrain->ReleaseUploadBuffers();
 	if (m_pSkyBox) m_pSkyBox->ReleaseUploadBuffers();
 	if (m_pWater) m_pWater->ReleaseUploadBuffers();
+	if (m_pRippleWater) m_pRippleWater->ReleaseUploadBuffers();
 
 	for (int i = 0; i < m_nShaders; i++) m_ppShaders[i]->ReleaseUploadBuffers();
 	for (int i = 0; i < m_nEnvironmentMappingShaders; i++) m_ppEnvironmentMappingShaders[i]->ReleaseUploadBuffers();
@@ -621,7 +628,14 @@ void CScene::Render(ID3D12GraphicsCommandList* pd3dCommandList, CCamera* pCamera
 
 	if (m_pSkyBox) m_pSkyBox->Render(pd3dCommandList, pCamera);
 	if (m_pTerrain) m_pTerrain->Render(pd3dCommandList, pCamera);
-	if (m_pWater) m_pWater->Render(pd3dCommandList, pCamera);
+	if (m_bWave)
+	{
+		if (m_pRippleWater) m_pRippleWater->Render(pd3dCommandList, pCamera);
+	}
+	else
+	{
+		if (m_pWater) m_pWater->Render(pd3dCommandList, pCamera);
+	}
 
 	for (int i = 0; i < m_nGameObjects; i++) if (m_ppGameObjects[i]) m_ppGameObjects[i]->Render(pd3dCommandList, pCamera);
 
